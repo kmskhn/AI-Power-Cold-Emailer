@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AI Emailer" />
-  <link rel="apple-touch-icon" href="/icon-192.jpg" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><filter id='g'><feGaussianBlur stdDeviation='3'/></filter></defs><rect width='64' height='64' rx='6' fill='%2304050c'/><rect width='60' height='60' x='2' y='2' rx='5' fill='none' stroke='%2300f3ff' stroke-width='2'/><text x='50%25' y='55%25' font-size='32' text-anchor='middle' dominant-baseline='middle' filter='url(%23g)' fill='%23ff007f'>⚡</text><text x='50%25' y='55%25' font-size='32' text-anchor='middle' dominant-baseline='middle' fill='%2300f3ff'>⚡</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -262,6 +262,63 @@
       box-shadow: 0 0 14px rgba(255, 0, 127, 0.4);
     }
 
+    .empty-users-alert {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      background: rgba(255, 0, 127, 0.08);
+      border: 1.5px solid var(--neon-pink);
+      border-radius: 6px;
+      box-shadow: 0 0 25px rgba(255, 0, 127, 0.25);
+      animation: pulseAlert 2.5s infinite alternate;
+      grid-column: 1 / -1;
+      width: 100%;
+    }
+    @keyframes pulseAlert {
+      0% { box-shadow: 0 0 15px rgba(255, 0, 127, 0.2); }
+      100% { box-shadow: 0 0 30px rgba(255, 0, 127, 0.5); }
+    }
+    .empty-alert-icon { font-size: 2.2rem; filter: drop-shadow(0 0 8px var(--neon-pink)); }
+    .empty-alert-content { flex: 1; }
+    .empty-alert-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--neon-yellow);
+      margin-bottom: 4px;
+    }
+    .empty-alert-sub {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+    .btn-alert-add {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      color: #04050c;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.84rem;
+      font-weight: 800;
+      padding: 11px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.5);
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-alert-add:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.8);
+    }
+    @media (max-width: 650px) {
+      .empty-users-alert { flex-direction: column; text-align: center; }
+      .btn-alert-add { width: 100%; justify-content: center; }
+    }
+
     /* ── Input tabs ── */
     .input-tabs { display: flex; padding: 12px 20px 0; gap: 6px; }
     .tab-btn {
@@ -317,6 +374,105 @@
     #file-input { display: none; }
     #img-preview { max-height: 180px; border-radius: 4px; object-fit: contain; display: none; max-width: 100%; border: 1px solid var(--neon-cyan); box-shadow: 0 0 12px rgba(0, 243, 255, 0.4); }
     #img-preview.shown { display: block; }
+
+    /* ── Camera & Live Viewfinder ── */
+    .camera-container {
+      margin: 0 20px 16px;
+      border: 2px dashed rgba(0, 243, 255, 0.35);
+      border-radius: 4px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 243, 255, 0.02);
+      transition: all 0.2s;
+      position: relative;
+    }
+    .camera-prompt {
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+    }
+    .cam-icon {
+      font-size: 2.8rem;
+      filter: drop-shadow(0 0 12px var(--neon-cyan));
+      margin-bottom: 8px;
+    }
+    #camera-viewfinder {
+      width: 100%;
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #000;
+    }
+    .camera-overlay-grid {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      background: linear-gradient(rgba(0,243,255,0.06) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0,243,255,0.06) 1px, transparent 1px);
+      background-size: 33.33% 33.33%;
+      pointer-events: none;
+    }
+    .camera-controls {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 10;
+    }
+    .cam-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(4, 6, 16, 0.85);
+      border: 1.5px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+      transition: all 0.15s;
+    }
+    .cam-btn:hover {
+      background: rgba(0, 243, 255, 0.25);
+      transform: scale(1.08);
+    }
+    .cam-shutter-btn {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: rgba(255, 0, 127, 0.2);
+      border: 3px solid var(--neon-pink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.65);
+      transition: all 0.15s;
+    }
+    .cam-shutter-btn:hover, .cam-shutter-btn:active {
+      transform: scale(0.94);
+      box-shadow: 0 0 30px rgba(255, 0, 127, 0.95);
+    }
+    .shutter-inner {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--neon-pink);
+      box-shadow: 0 0 10px var(--neon-pink);
+    }
 
     .paste-area {
       flex: 1; background: rgba(0, 0, 0, 0.45);
@@ -633,6 +789,97 @@
     }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+    /* ── Form styles ── */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--neon-cyan);
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      border-radius: 4px; padding: 9px 12px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; color: var(--text);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+    }
+    .form-grid-2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Gemini Key Button & Indicator ── */
+    .btn-api-key {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 14px; border-radius: 4px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer;
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+      transition: all 0.2s;
+    }
+    .btn-api-key:hover {
+      background: rgba(0, 243, 255, 0.2);
+      box-shadow: 0 0 16px rgba(0, 243, 255, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-api-key.key-missing {
+      border-color: var(--neon-yellow);
+      color: var(--neon-yellow);
+      background: rgba(255, 230, 0, 0.1);
+      box-shadow: 0 0 12px rgba(255, 230, 0, 0.35);
+      animation: pulseKey 2.2s infinite;
+    }
+    @keyframes pulseKey {
+      0%, 100% { box-shadow: 0 0 8px rgba(255, 230, 0, 0.25); }
+      50% { box-shadow: 0 0 18px rgba(255, 230, 0, 0.65); }
+    }
+    .key-badge-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--neon-green);
+      box-shadow: 0 0 8px var(--neon-green);
+      display: inline-block;
+    }
+    .key-badge-dot.missing {
+      background: var(--neon-yellow);
+      box-shadow: 0 0 8px var(--neon-yellow);
+    }
+    .btn-install {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(57, 255, 20, 0.15), rgba(0, 243, 255, 0.15));
+      border: 1px solid var(--neon-green);
+      color: var(--neon-green);
+      box-shadow: 0 0 12px rgba(57, 255, 20, 0.3);
+      transition: all 0.2s;
+    }
+    .btn-install:hover {
+      background: rgba(57, 255, 20, 0.25);
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+      transform: translateY(-1px);
+    }
+
     /* ── Spinner / Toast ── */
     .spinner {
       width: 16px; height: 16px; border-radius: 50%;
@@ -749,7 +996,7 @@
         font-size: 16px !important; /* Prevents iOS auto-zoom on input focus */
         line-height: 1.5;
       }
-      #drop-zone {
+      #drop-zone, .camera-container {
         margin: 0 14px 14px;
         min-height: 160px;
         padding: 16px;
@@ -928,10 +1175,53 @@
 
 <header>
   <div class="logo"><div class="logo-icon">✉️</div> AI Job Emailer</div>
-  <span class="header-badge">Powered by <span style="color:var(--neon-cyan)"> MAK {Byte}</span></span>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <button class="btn-install" id="header-install-btn" onclick="installPWA()" style="display:none;">
+      📲 Install App
+    </button>
+    <button class="btn-api-key" id="header-key-btn" onclick="openApiKeyModal()">
+      <span id="key-badge-dot" class="key-badge-dot"></span>
+      <span id="key-badge-text">Gemini Key</span>
+    </button>
+    <span class="header-badge">Powered by <span style="color:var(--neon-cyan)"> MAK {Byte}</span></span>
+  </div>
 </header>
 
 <div id="toast-container"></div>
+
+<!-- Gemini API Key Modal -->
+<div class="modal-overlay" id="api-key-modal">
+  <div class="modal-box" style="max-width: 520px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="modal-title">🔑 Gemini API Key</div>
+      <button class="cam-btn" type="button" style="width:34px; height:34px; font-size:0.85rem;" onclick="closeApiKeyModal()">✕</button>
+    </div>
+
+    <p style="font-size:0.88rem; line-height:1.6; color:#cbd5e1;">
+      Each user provides their own Gemini API key so that shared token limits and quotas are not exhausted. Keys are stored locally in your browser.
+    </p>
+
+    <div style="background:rgba(0,243,255,0.06); border:1px solid rgba(0,243,255,0.25); border-radius:4px; padding:12px; font-size:0.82rem; color:var(--text);">
+      💡 <strong>Get a Free Key:</strong> Generate a free Gemini API key in 30 seconds at 
+      <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--neon-cyan); text-decoration:underline;">Google AI Studio ↗</a>.
+    </div>
+
+    <div class="form-group" style="margin-top:4px;">
+      <label class="form-label">Your Google Gemini Key</label>
+      <div style="position:relative;">
+        <input class="form-input" id="input-gemini-key" type="password" placeholder="AIzaSy... or AQ...." style="padding-right:40px; font-family:'JetBrains Mono',monospace; font-size:0.85rem;" />
+        <button type="button" onclick="toggleKeyVisibility()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--neon-cyan); cursor:pointer; font-size:1.05rem;">👁️</button>
+      </div>
+      <span id="key-saved-hint" style="font-size:0.75rem; color:var(--neon-green); display:none;">✅ Key is saved in this browser's localStorage</span>
+    </div>
+
+    <div class="modal-actions" style="margin-top:6px;">
+      <button type="button" class="btn btn-ghost" style="color:var(--danger); border-color:var(--danger);" onclick="removeGeminiKey()">Clear Key</button>
+      <button type="button" class="btn btn-ghost" onclick="closeApiKeyModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="saveGeminiKey()">💾 Save Key</button>
+    </div>
+  </div>
+</div>
 
 <!-- Follow-up modal -->
 <div class="modal-overlay" id="followup-modal">
@@ -952,7 +1242,7 @@
   <div class="panel" id="panel-users">
     <div class="users-header-row">
       <span class="users-label">Select Active User</span>
-      <button class="btn-add-user" onclick="showAddUserHint()">+ Add User</button>
+      <a href="/add-user.html" class="btn-add-user" style="text-decoration:none;">+ Add User</a>
     </div>
     <div id="user-cards"></div>
   </div>
@@ -965,25 +1255,75 @@
     </div>
     <div class="input-tabs">
       <button class="tab-btn active" id="tab-text" onclick="switchTab('text')">📝 Paste Text</button>
-      <button class="tab-btn" id="tab-image" onclick="switchTab('image')">🖼️ Upload Screenshot</button>
+      <button class="tab-btn" id="tab-upload" onclick="switchTab('upload')">📁 Upload Image</button>
+      <button class="tab-btn" id="tab-capture" onclick="switchTab('capture')">📷 Capture Photo</button>
     </div>
 
-    <!-- Text tab -->
+    <!-- Tab 1: Paste Text -->
     <div id="pane-text">
       <textarea id="job-post" class="paste-area" placeholder="Paste the LinkedIn / WhatsApp job posting here and press Ctrl+Enter (or click Generate)..."></textarea>
     </div>
 
-    <!-- Image tab -->
-    <div id="pane-image" style="display:none; padding:16px 0 0">
+    <!-- Tab 2: Upload Image -->
+    <div id="pane-upload" style="display:none; padding:16px 0 0">
       <div id="drop-zone" onclick="handleDropZoneClick()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
         <img id="img-preview" src="" alt="preview" />
         <div id="dz-content" style="display:flex;flex-direction:column;align-items:center;gap:10px">
-          <div class="dz-icon">📸</div>
-          <p id="dz-text">Drag & drop a screenshot or <strong style="color:var(--neon-cyan)">click to browse</strong></p>
-          <span class="dz-hint" id="dz-hint">PNG, JPG, WEBP · Gemini Vision will read it</span>
+          <div class="dz-icon">🖼️</div>
+          <p id="dz-text">Drag & drop image or <strong style="color:var(--neon-cyan)">click to browse</strong></p>
+          <span class="dz-hint" id="dz-hint">PNG, JPG, WEBP, Screenshots · Paste (Ctrl+V) works anywhere</span>
         </div>
       </div>
       <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)" />
+      <div id="upload-actions" style="display:none; margin: 0 20px 16px; gap:10px; justify-content:center;">
+        <button class="btn btn-ghost" style="flex:1" onclick="handleDropZoneClick()">🔄 Choose Different Image</button>
+        <button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);" onclick="clearImage()">✕ Remove</button>
+      </div>
+    </div>
+
+    <!-- Tab 3: Capture Photo -->
+    <div id="pane-capture" style="display:none; padding:16px 0 0">
+      <div id="camera-container" class="camera-container">
+        <!-- Live Viewfinder -->
+        <div id="camera-viewfinder" style="display:none;">
+          <video id="camera-video" playsinline autoplay muted style="width:100%; max-height:280px; object-fit:cover; display:block;"></video>
+          <div class="camera-overlay-grid"></div>
+          <div class="camera-controls">
+            <button class="cam-btn" onclick="flipCamera()" title="Switch camera">🔄</button>
+            <button class="cam-shutter-btn" onclick="snapPhoto()" title="Take photo">
+              <div class="shutter-inner"></div>
+            </button>
+            <button class="cam-btn" onclick="stopCameraStream()" title="Close viewfinder">✕</button>
+          </div>
+        </div>
+
+        <!-- Camera Prompt Buttons -->
+        <div id="camera-prompt" class="camera-prompt">
+          <div class="cam-icon">📸</div>
+          <p style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text);margin-bottom:4px;">Capture Job Post</p>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--hint);margin-bottom:16px;display:block;">Snap photo from another screen, printout, or document</span>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:380px;">
+            <button class="btn btn-primary" style="flex:1;min-width:145px;justify-content:center;" onclick="openNativeCamera()">
+              📷 Launch Camera
+            </button>
+            <button class="btn btn-ghost" style="flex:1;min-width:145px;justify-content:center;" onclick="startLiveCamera()">
+              🎥 Live Viewfinder
+            </button>
+          </div>
+        </div>
+
+        <!-- Captured Photo Preview -->
+        <div id="camera-preview-container" style="display:none; flex-direction:column; align-items:center; gap:12px; padding:14px; width:100%;">
+          <img id="camera-img-preview" src="" alt="Captured job post" style="max-height:240px; max-width:100%; border-radius:4px; border:1px solid var(--neon-cyan); box-shadow:0 0 15px rgba(0,243,255,0.4);" />
+          <div style="display:flex; gap:10px; width:100%; justify-content:center;">
+            <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="retakePhoto()">🔄 Retake Photo</button>
+            <button class="btn btn-ghost" style="color:var(--danger);border-color:var(--danger);" onclick="clearImage()">✕ Remove</button>
+          </div>
+        </div>
+      </div>
+      <!-- Hidden file input for native camera capture -->
+      <input type="file" id="native-camera-input" accept="image/*" capture="environment" onchange="onCameraCaptured(event)" style="display:none;" />
+      <canvas id="camera-canvas" style="display:none;"></canvas>
     </div>
 
     <div class="input-footer">
@@ -1081,14 +1421,71 @@
       const data = await res.json();
       allUsers = data.users || [];
       const container = document.getElementById('user-cards');
-      container.innerHTML = allUsers.map(u => `
-        <div class="user-card" id="ucard-${u.id}" onclick="selectUser('${u.id}')">
-          <div class="user-avatar" style="background:${u.color||'#7c6ef7'}">${u.initials||u.name.split(' ').map(w=>w[0]).join('')}</div>
-          <div><div class="user-card-name">${u.name}</div><div class="user-card-email">${u.email}</div></div>
-          <div class="user-card-check" id="ucheck-${u.id}"></div>
-        </div>
-      `).join('');
-      selectUser(null, false);
+
+      if (!allUsers || allUsers.length === 0) {
+        container.innerHTML = `
+          <div class="empty-users-alert">
+            <div class="empty-alert-icon">⚠️</div>
+            <div class="empty-alert-content">
+              <div class="empty-alert-title">No User Profiles Found!</div>
+              <div class="empty-alert-sub">You must create a candidate profile before you can generate cold emails or send your CV.</div>
+            </div>
+            <a href="/add-user.html" class="btn-alert-add">👉 Click here to Add User</a>
+          </div>
+        `;
+        selectUser(null, false);
+        return;
+      }
+
+      container.innerHTML = '';
+      allUsers.forEach(u => {
+        const card = document.createElement('div');
+        card.className = 'user-card';
+        card.id = 'ucard-' + u.id;
+        card.onclick = () => selectUser(u.id);
+
+        const avatar = document.createElement('div');
+        avatar.className = 'user-avatar';
+        avatar.style.background = u.color || '#7c6ef7';
+        avatar.textContent = u.initials || (u.name ? u.name.split(' ').map(w => w[0]).join('') : '?');
+
+        const info = document.createElement('div');
+        const nameEl = document.createElement('div');
+        nameEl.className = 'user-card-name';
+        nameEl.textContent = u.name || '';
+        const emailEl = document.createElement('div');
+        emailEl.className = 'user-card-email';
+        emailEl.textContent = u.email || '';
+        info.appendChild(nameEl);
+        info.appendChild(emailEl);
+
+        const check = document.createElement('div');
+        check.className = 'user-card-check';
+        check.id = 'ucheck-' + u.id;
+
+        card.appendChild(avatar);
+        card.appendChild(info);
+        card.appendChild(check);
+        container.appendChild(card);
+      });
+
+      // Check URL parameters for newly added user
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramUser = urlParams.get('user');
+      const justAdded = urlParams.get('added');
+
+      if (justAdded) {
+        showToast('Profile added successfully! Ready to generate emails.', 'success', 5000);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      if (paramUser && allUsers.some(u => u.id === paramUser)) {
+        selectUser(paramUser, false);
+      } else if (allUsers.length === 1) {
+        selectUser(allUsers[0].id, false);
+      } else {
+        selectUser(null, false);
+      }
     } catch(e) { console.error('Failed to load users', e); }
   }
 
@@ -1105,6 +1502,7 @@
 
   function updateInputState() {
     const hasUser = !!activeUserId;
+    const noUsers = allUsers.length === 0;
     const jobPost = document.getElementById('job-post');
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -1114,9 +1512,13 @@
 
     if (jobPost) {
       jobPost.disabled = !hasUser;
-      jobPost.placeholder = hasUser
-        ? "Paste the LinkedIn / WhatsApp job posting here and press Ctrl+Enter (or click Generate)..."
-        : "⚠️ Please select an active user above before pasting job posting...";
+      if (noUsers) {
+        jobPost.placeholder = "⚠️ No user profile configured. Click '+ Add User' above to register your profile first...";
+      } else {
+        jobPost.placeholder = hasUser
+          ? "Paste the LinkedIn / WhatsApp job posting here and press Ctrl+Enter (or click Generate)..."
+          : "⚠️ Please select an active user above before pasting job posting...";
+      }
     }
     if (fileInput) {
       fileInput.disabled = !hasUser;
@@ -1125,21 +1527,76 @@
       dropZone.classList.toggle('disabled', !hasUser);
     }
     if (dzText) {
-      dzText.innerHTML = hasUser
-        ? 'Drag & drop a screenshot or <strong style="color:var(--neon-cyan)">click to browse</strong>'
-        : '<span style="color:var(--danger)">⚠️ Please select an active user above before uploading</span>';
+      if (noUsers) {
+        dzText.innerHTML = '<a href="/add-user.html" style="color:var(--neon-pink); text-decoration:underline; font-weight:700;">⚠️ Click here to Add a User profile first</a>';
+      } else {
+        dzText.innerHTML = hasUser
+          ? 'Drag & drop a screenshot or <strong style="color:var(--neon-cyan)">click to browse</strong>'
+          : '<span style="color:var(--danger)">⚠️ Please select an active user above before uploading</span>';
+      }
     }
     if (dzHint) {
       dzHint.style.display = hasUser ? 'block' : 'none';
     }
     if (btnGen) {
       btnGen.disabled = !hasUser;
-      btnGen.title = hasUser ? '' : 'Please select an active user first';
+      btnGen.title = noUsers ? 'Add a user profile first' : (hasUser ? '' : 'Please select an active user first');
     }
   }
 
-  function showAddUserHint() {
-    showToast('Add a new entry to emailer/users.json and restart the server.', 'info', 6000);
+  // ── Gemini API Key Client Management ─────────────────────────────────────
+  function getStoredGeminiKey() {
+    return (localStorage.getItem('gemini_api_key') || '').trim();
+  }
+
+  function updateKeyBadge() {
+    const key = getStoredGeminiKey();
+    const dot = document.getElementById('key-badge-dot');
+    const text = document.getElementById('key-badge-text');
+    const hint = document.getElementById('key-saved-hint');
+    if (dot) dot.classList.toggle('active', !!key);
+    if (text) text.textContent = key ? 'Gemini Key: Active' : '🔑 Gemini Key';
+    if (hint) hint.style.display = key ? 'inline-block' : 'none';
+  }
+
+  function openApiKeyModal() {
+    const input = document.getElementById('input-gemini-key');
+    if (input) input.value = getStoredGeminiKey();
+    updateKeyBadge();
+    document.getElementById('api-key-modal').classList.add('open');
+  }
+
+  function closeApiKeyModal() {
+    document.getElementById('api-key-modal').classList.remove('open');
+  }
+
+  function saveGeminiKey() {
+    const input = document.getElementById('input-gemini-key');
+    const val = (input?.value || '').trim();
+    if (!val) {
+      showToast('Please enter a valid Gemini API key.', 'error');
+      return;
+    }
+    localStorage.setItem('gemini_api_key', val);
+    updateKeyBadge();
+    showToast('Gemini API key saved in browser storage!', 'success');
+    closeApiKeyModal();
+  }
+
+  function removeGeminiKey() {
+    localStorage.removeItem('gemini_api_key');
+    const input = document.getElementById('input-gemini-key');
+    if (input) input.value = '';
+    updateKeyBadge();
+    showToast('Gemini API key removed from browser storage.', 'info');
+    closeApiKeyModal();
+  }
+
+  function toggleKeyVisibility() {
+    const input = document.getElementById('input-gemini-key');
+    if (input) {
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
   }
 
   // ── Toast ─────────────────────────────────────────────────────────────────
@@ -1147,18 +1604,41 @@
     const icons = { success: '✅', error: '❌', info: '💬' };
     const t = document.createElement('div');
     t.className = `toast toast-${type}`;
-    t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+    const iconSpan = document.createElement('span');
+    iconSpan.textContent = icons[type] || '💬';
+    const msgSpan = document.createElement('span');
+    msgSpan.textContent = String(msg || '');
+    t.appendChild(iconSpan);
+    t.appendChild(msgSpan);
     document.getElementById('toast-container').appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, duration);
   }
 
   // ── Tab switching ─────────────────────────────────────────────────────────
   function switchTab(tab) {
+    if (currentTab === 'capture' && tab !== 'capture') {
+      stopCameraStream();
+    }
     currentTab = tab;
     document.getElementById('tab-text').classList.toggle('active', tab === 'text');
-    document.getElementById('tab-image').classList.toggle('active', tab === 'image');
+    document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+    document.getElementById('tab-capture').classList.toggle('active', tab === 'capture');
+
     document.getElementById('pane-text').style.display = tab === 'text' ? 'block' : 'none';
-    document.getElementById('pane-image').style.display = tab === 'image' ? 'block' : 'none';
+    document.getElementById('pane-upload').style.display = tab === 'upload' ? 'block' : 'none';
+    document.getElementById('pane-capture').style.display = tab === 'capture' ? 'block' : 'none';
+
+    updateGenButtonLabel();
+  }
+
+  function updateGenButtonLabel() {
+    const genText = document.getElementById('gen-text');
+    if (!genText) return;
+    if ((currentTab === 'upload' || currentTab === 'capture') && selectedImageData) {
+      genText.textContent = 'Extract & Generate Email';
+    } else {
+      genText.textContent = 'Generate Email';
+    }
   }
 
   // ── Char counter ──────────────────────────────────────────────────────────
@@ -1168,6 +1648,102 @@
   document.getElementById('job-post').addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateEmail();
   });
+
+  // ── Camera and capture functions ──────────────────────────────────────────
+  let activeCameraStream = null;
+  let currentFacingMode = 'environment';
+
+  function openNativeCamera() {
+    if (!activeUserId) {
+      showToast('Please select an active user first.', 'error');
+      return;
+    }
+    document.getElementById('native-camera-input').click();
+  }
+
+  function onCameraCaptured(e) {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      loadImageFile(file, 'camera');
+      e.target.value = '';
+    }
+  }
+
+  async function startLiveCamera() {
+    if (!activeUserId) {
+      showToast('Please select an active user first.', 'error');
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showToast('Live viewfinder not supported in this browser. Opening device camera...', 'info');
+      openNativeCamera();
+      return;
+    }
+
+    try {
+      if (activeCameraStream) stopCameraStream();
+
+      const constraints = {
+        video: {
+          facingMode: { ideal: currentFacingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      activeCameraStream = stream;
+      const video = document.getElementById('camera-video');
+      video.srcObject = stream;
+      await video.play();
+
+      document.getElementById('camera-prompt').style.display = 'none';
+      document.getElementById('camera-preview-container').style.display = 'none';
+      document.getElementById('camera-viewfinder').style.display = 'block';
+    } catch (err) {
+      console.warn('Camera stream error:', err);
+      showToast('Could not access live stream. Opening camera...', 'info');
+      openNativeCamera();
+    }
+  }
+
+  function stopCameraStream() {
+    if (activeCameraStream) {
+      activeCameraStream.getTracks().forEach(t => t.stop());
+      activeCameraStream = null;
+    }
+    const video = document.getElementById('camera-video');
+    if (video) video.srcObject = null;
+    document.getElementById('camera-viewfinder').style.display = 'none';
+    if (!selectedImageData) {
+      document.getElementById('camera-prompt').style.display = 'flex';
+    }
+  }
+
+  async function flipCamera() {
+    currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+    await startLiveCamera();
+  }
+
+  function snapPhoto() {
+    const video = document.getElementById('camera-video');
+    const canvas = document.getElementById('camera-canvas');
+    if (!video || !video.videoWidth) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    stopCameraStream();
+    setImageData(dataUrl, 'image/jpeg', 'camera');
+  }
+
+  function retakePhoto() {
+    clearImage();
+    startLiveCamera();
+  }
 
   // ── Image upload drag & drop ──────────────────────────────────────────────
   function handleDropZoneClick() {
@@ -1196,7 +1772,7 @@
       return;
     }
     const file = e.dataTransfer.files[0];
-    if (file) loadImageFile(file);
+    if (file) loadImageFile(file, 'upload');
   }
 
   function onFileSelected(e) {
@@ -1205,45 +1781,184 @@
       return;
     }
     const file = e.target.files[0];
-    if (file) loadImageFile(file);
+    if (file) loadImageFile(file, 'upload');
   }
 
-  function loadImageFile(file) {
-    selectedMimeType = file.type;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      selectedImageData = dataUrl.split(',')[1];
+  // ── Unified Image Handling ────────────────────────────────────────────────
+  function setImageData(dataUrl, mimeType, source = 'upload') {
+    selectedMimeType = mimeType || 'image/jpeg';
+    selectedImageData = dataUrl.split(',')[1];
+
+    if (source === 'camera') {
+      const cameraPreview = document.getElementById('camera-img-preview');
+      cameraPreview.src = dataUrl;
+      document.getElementById('camera-prompt').style.display = 'none';
+      document.getElementById('camera-viewfinder').style.display = 'none';
+      document.getElementById('camera-preview-container').style.display = 'flex';
+    } else {
       const preview = document.getElementById('img-preview');
       preview.src = dataUrl;
       preview.classList.add('shown');
       document.getElementById('dz-content').style.display = 'none';
+      const actions = document.getElementById('upload-actions');
+      if (actions) actions.style.display = 'flex';
+    }
+
+    updateGenButtonLabel();
+    showToast('Image ready for AI extraction!', 'success');
+  }
+
+  function loadImageFile(file, source = 'upload') {
+    selectedMimeType = file.type || 'image/jpeg';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImageData(e.target.result, file.type, source);
     };
     reader.readAsDataURL(file);
   }
 
+  function clearImage() {
+    selectedImageData = null;
+    selectedMimeType = null;
+    stopCameraStream();
+
+    // Reset upload UI
+    const preview = document.getElementById('img-preview');
+    if (preview) { preview.src = ''; preview.classList.remove('shown'); }
+    const dzContent = document.getElementById('dz-content');
+    if (dzContent) dzContent.style.display = 'flex';
+    const uploadActions = document.getElementById('upload-actions');
+    if (uploadActions) uploadActions.style.display = 'none';
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) fileInput.value = '';
+
+    // Reset camera UI
+    const cameraPreview = document.getElementById('camera-img-preview');
+    if (cameraPreview) cameraPreview.src = '';
+    const cameraPrompt = document.getElementById('camera-prompt');
+    if (cameraPrompt) cameraPrompt.style.display = 'flex';
+    const cameraPreviewCont = document.getElementById('camera-preview-container');
+    if (cameraPreviewCont) cameraPreviewCont.style.display = 'none';
+    const nativeCam = document.getElementById('native-camera-input');
+    if (nativeCam) nativeCam.value = '';
+
+    updateGenButtonLabel();
+  }
+
+  // ── Global clipboard paste listener ──────────────────────────────────────
+  window.addEventListener('paste', (e) => {
+    if (!activeUserId) return;
+    const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.indexOf('image') === 0) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          switchTab('upload');
+          loadImageFile(file, 'upload');
+          showToast('Image pasted from clipboard!', 'success');
+        }
+        break;
+      }
+    }
+  });
+
 // ── Render parsed info ────────────────────────────────────────────────────
   function renderParsed(data) {
     parsedData = data;
-    const emailTags = data.emails.map(e =>
-      `<span class="tag tag-email" title="Click to remove" onclick="removeEmail(this,'${e}')">${e} ✕</span>`
-    ).join('') || '<span class="field-empty">No emails found</span>';
-    const phoneTags = data.phones.map(p =>
-      `<span class="tag tag-phone">${p}</span>`
-    ).join('') || '<span class="field-empty">Not found</span>';
+    const container = document.getElementById('parsed-content');
+    container.innerHTML = '';
 
-    document.getElementById('parsed-content').innerHTML = `
-      <div class="field-row"><span class="field-label">Company</span><span class="field-value">${data.company || '<span class="field-empty">Not detected</span>'}</span></div>
-      <div class="field-row"><span class="field-label">Role</span><span class="field-value">${data.role || '<span class="field-empty">Not detected</span>'}</span></div>
-      <div class="field-row"><span class="field-label">Experience Required</span><span class="field-value">${data.expRequired || '<span class="field-empty">Not specified</span>'}</span></div>
-      <div class="field-row"><span class="field-label">Location</span><span class="field-value">${data.location || '<span class="field-empty">Not specified</span>'}</span></div>
-      <div class="field-row">
-        <span class="field-label">Recipients (click to remove)</span>
-        <div class="tag-row" id="email-tags">${emailTags}</div>
-        <input id="extra-email" class="recipients-edit" placeholder="+ Add recipient email manually..." />
-      </div>
-      <div class="field-row"><span class="field-label">Phone(s)</span><div class="tag-row">${phoneTags}</div></div>
-    `;
+    function makeFieldRow(label, textVal, fallback = 'Not detected') {
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'field-label';
+      lbl.textContent = label;
+      row.appendChild(lbl);
+
+      const val = document.createElement('span');
+      val.className = 'field-value';
+      if (textVal) {
+        val.textContent = textVal;
+      } else {
+        const empty = document.createElement('span');
+        empty.className = 'field-empty';
+        empty.textContent = fallback;
+        val.appendChild(empty);
+      }
+      row.appendChild(val);
+      return row;
+    }
+
+    container.appendChild(makeFieldRow('Company', data.company, 'Not detected'));
+    container.appendChild(makeFieldRow('Role', data.role, 'Not detected'));
+    container.appendChild(makeFieldRow('Experience Required', data.expRequired, 'Not specified'));
+    container.appendChild(makeFieldRow('Location', data.location, 'Not specified'));
+
+    // Recipients row
+    const recipRow = document.createElement('div');
+    recipRow.className = 'field-row';
+    const recipLbl = document.createElement('span');
+    recipLbl.className = 'field-label';
+    recipLbl.textContent = 'Recipients (click to remove)';
+    recipRow.appendChild(recipLbl);
+
+    const emailTagRow = document.createElement('div');
+    emailTagRow.className = 'tag-row';
+    emailTagRow.id = 'email-tags';
+
+    if (data.emails && data.emails.length > 0) {
+      data.emails.forEach(email => {
+        const tag = document.createElement('span');
+        tag.className = 'tag tag-email';
+        tag.title = 'Click to remove';
+        tag.textContent = `${email} ✕`;
+        tag.onclick = function() { removeEmail(this, email); };
+        emailTagRow.appendChild(tag);
+      });
+    } else {
+      const emptySpan = document.createElement('span');
+      emptySpan.className = 'field-empty';
+      emptySpan.textContent = 'No emails found';
+      emailTagRow.appendChild(emptySpan);
+    }
+    recipRow.appendChild(emailTagRow);
+
+    const extraInput = document.createElement('input');
+    extraInput.id = 'extra-email';
+    extraInput.className = 'recipients-edit';
+    extraInput.placeholder = '+ Add recipient email manually...';
+    recipRow.appendChild(extraInput);
+    container.appendChild(recipRow);
+
+    // Phones row
+    const phoneRow = document.createElement('div');
+    phoneRow.className = 'field-row';
+    const phoneLbl = document.createElement('span');
+    phoneLbl.className = 'field-label';
+    phoneLbl.textContent = 'Phone(s)';
+    phoneRow.appendChild(phoneLbl);
+
+    const phoneTagRow = document.createElement('div');
+    phoneTagRow.className = 'tag-row';
+    if (data.phones && data.phones.length > 0) {
+      data.phones.forEach(p => {
+        const tag = document.createElement('span');
+        tag.className = 'tag tag-phone';
+        tag.textContent = p;
+        phoneTagRow.appendChild(tag);
+      });
+    } else {
+      const emptySpan = document.createElement('span');
+      emptySpan.className = 'field-empty';
+      emptySpan.textContent = 'Not found';
+      phoneTagRow.appendChild(emptySpan);
+    }
+    phoneRow.appendChild(phoneTagRow);
+    container.appendChild(phoneRow);
+
     document.getElementById('parse-dot').className = 'dot dot-green';
   }
 
@@ -1262,6 +1977,12 @@
       showToast('Please select an active user first.', 'error');
       return;
     }
+    const geminiKey = getStoredGeminiKey();
+    if (!geminiKey) {
+      openApiKeyModal();
+      showToast('Please provide your Gemini API Key first to generate emails.', 'error', 5000);
+      return;
+    }
     const btn = document.getElementById('btn-generate');
     btn.disabled = true;
     document.getElementById('gen-icon').innerHTML = '<span class="spinner"></span>';
@@ -1269,12 +1990,15 @@
     let jobPost = '';
 
     try {
-      // If on image tab and image loaded → extract text first
-      if (currentTab === 'image' && selectedImageData) {
-        document.getElementById('gen-text').textContent = 'Reading image...';
+      // If on upload or capture tab and image loaded → extract text first
+      if ((currentTab === 'upload' || currentTab === 'capture') && selectedImageData) {
+        document.getElementById('gen-text').textContent = 'Reading image with AI...';
         const extRes = await fetch('/api/extract-image', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-gemini-key': geminiKey,
+          },
           body: JSON.stringify({ imageData: selectedImageData, mimeType: selectedMimeType }),
         });
         const extData = await extRes.json();
@@ -1287,12 +2011,24 @@
         jobPost = document.getElementById('job-post').value.trim();
       }
 
-      if (!jobPost) { showToast('Please paste a job posting or upload an image.', 'error'); return; }
+      if (!jobPost) {
+        if (currentTab === 'capture') {
+          showToast('Please snap or take a photo first.', 'error');
+        } else if (currentTab === 'upload') {
+          showToast('Please upload or paste an image first.', 'error');
+        } else {
+          showToast('Please paste a job posting or upload/capture an image.', 'error');
+        }
+        return;
+      }
 
       document.getElementById('gen-text').textContent = 'Generating...';
       const res = await fetch('/api/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-gemini-key': geminiKey,
+        },
         body: JSON.stringify({ jobPost, userId: activeUserId }),
       });
       const data = await res.json();
@@ -1309,9 +2045,16 @@
 
       if (data.parsed.phones?.length) {
         document.getElementById('wa-body').value = data.whatsapp || '';
-        document.getElementById('wa-phone-tags').innerHTML = data.parsed.phones.map((p, i) =>
-          `<span class="wa-phone-tag${i===0?' selected':''}" onclick="selectWAPhone(this)" data-phone="${p}">📱 ${p}</span>`
-        ).join('');
+        const waContainer = document.getElementById('wa-phone-tags');
+        waContainer.innerHTML = '';
+        data.parsed.phones.forEach((p, i) => {
+          const span = document.createElement('span');
+          span.className = `wa-phone-tag${i === 0 ? ' selected' : ''}`;
+          span.dataset.phone = p;
+          span.textContent = `📱 ${p}`;
+          span.onclick = function() { selectWAPhone(this); };
+          waContainer.appendChild(span);
+        });
         document.getElementById('panel-whatsapp').style.display = 'block';
       } else {
         document.getElementById('panel-whatsapp').style.display = 'none';
@@ -1328,7 +2071,7 @@
     } finally {
       btn.disabled = false;
       document.getElementById('gen-icon').textContent = '✨';
-      document.getElementById('gen-text').textContent = 'Generate Email';
+      updateGenButtonLabel();
     }
   }
 
@@ -1366,6 +2109,12 @@
 
   // ── Follow-up ─────────────────────────────────────────────────────────────
   async function initiateFollowup(id, to) {
+    const geminiKey = getStoredGeminiKey();
+    if (!geminiKey) {
+      openApiKeyModal();
+      showToast('Please provide your Gemini API Key first to generate follow-ups.', 'error', 5000);
+      return;
+    }
     pendingFollowupId = id;
     pendingFollowupBody = null;
     document.getElementById('modal-to-label').textContent = `To: ${to}`;
@@ -1375,7 +2124,11 @@
 
     try {
       const res = await fetch('/api/followup', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-gemini-key': geminiKey,
+        },
         body: JSON.stringify({ id }),
       });
       const data = await res.json();
@@ -1435,10 +2188,8 @@
     document.getElementById('panel-whatsapp').style.display = 'none';
     document.getElementById('parsed-content').innerHTML = `<div class="empty-state" style="padding:24px"><div class="icon">🔍</div><p>Parsed details will appear here.</p></div>`;
     document.getElementById('parse-dot').className = 'dot dot-yellow';
-    // Reset image upload
-    selectedImageData = null; selectedMimeType = null;
-    document.getElementById('img-preview').classList.remove('shown');
-    document.getElementById('dz-content').style.display = 'flex';
+    // Reset image & camera
+    clearImage();
     parsedData = {};
   }
 
@@ -1461,47 +2212,120 @@
       const data = await res.json();
       const list = document.getElementById('log-list');
       if (!data.entries || !data.entries.length) {
-        list.innerHTML = `<div class="log-empty">No sent emails recorded${selectedUserObj ? ' for ' + selectedUserObj.name : ''}.</div>`;
+        list.innerHTML = '';
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'log-empty';
+        emptyDiv.textContent = `No sent emails recorded${selectedUserObj ? ' for ' + selectedUserObj.name : ''}.`;
+        list.appendChild(emptyDiv);
         return;
       }
-      list.innerHTML = data.entries.map(e => {
+
+      list.innerHTML = '';
+      data.entries.forEach(e => {
         const date = new Date(e.timestamp).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
         const senderObj = allUsers.find(u => u.id === e.userId) || allUsers[0];
-        const senderBadge = senderObj
-          ? `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:0.68rem;background:rgba(0,243,255,0.12);border:1px solid rgba(0,243,255,0.4);color:var(--neon-cyan);margin-right:6px;">${senderObj.name}</span>`
-          : '';
-        const followedLabel = e.followedUp
-          ? `<span style="font-size:0.7rem;color:var(--neon-yellow);margin-left:6px;">↩ Followed up ${new Date(e.followUpTime).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`
-          : '';
-        return `
-          <div class="log-entry${e.followedUp ? ' followed-up' : ''}">
-            <div class="log-entry-info">
-              <div class="log-entry-subject">${e.subject}</div>
-              <div class="log-entry-meta">${senderBadge}To: ${e.to} &nbsp;·&nbsp; ${date} ${followedLabel}</div>
-            </div>
-            <div class="log-entry-actions">
-              <button class="btn btn-followup" ${e.followedUp ? 'disabled title="Already followed up"' : `onclick="initiateFollowup('${e.id}','${e.to}')"`}>
-                🔁 Follow Up
-              </button>
-            </div>
-          </div>`;
-      }).join('');
+
+        const item = document.createElement('div');
+        item.className = 'log-entry' + (e.followedUp ? ' followed-up' : '');
+
+        const info = document.createElement('div');
+        info.className = 'log-entry-info';
+
+        const subj = document.createElement('div');
+        subj.className = 'log-entry-subject';
+        subj.textContent = e.subject || '(No Subject)';
+        info.appendChild(subj);
+
+        const meta = document.createElement('div');
+        meta.className = 'log-entry-meta';
+
+        if (senderObj) {
+          const badge = document.createElement('span');
+          badge.style.cssText = 'display:inline-block;padding:1px 6px;border-radius:3px;font-size:0.68rem;background:rgba(0,243,255,0.12);border:1px solid rgba(0,243,255,0.4);color:var(--neon-cyan);margin-right:6px;';
+          badge.textContent = senderObj.name;
+          meta.appendChild(badge);
+        }
+
+        const toSpan = document.createElement('span');
+        toSpan.textContent = `To: ${e.to} · ${date}`;
+        meta.appendChild(toSpan);
+
+        if (e.followedUp) {
+          const fSpan = document.createElement('span');
+          fSpan.style.cssText = 'font-size:0.7rem;color:var(--neon-yellow);margin-left:6px;';
+          fSpan.textContent = ` ↩ Followed up ${new Date(e.followUpTime).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}`;
+          meta.appendChild(fSpan);
+        }
+
+        info.appendChild(meta);
+        item.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'log-entry-actions';
+
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-followup';
+        btn.textContent = '🔁 Follow Up';
+        if (e.followedUp) {
+          btn.disabled = true;
+          btn.title = 'Already followed up';
+        } else {
+          btn.onclick = () => initiateFollowup(e.id, e.to);
+        }
+        actions.appendChild(btn);
+        item.appendChild(actions);
+
+        list.appendChild(item);
+      });
     } catch (err) {
       console.error('Failed to load log', err);
     }
   }
 
   updateInputState();
+  updateKeyBadge();
   loadUsers();
   loadLog();
 </script>
 
 <script>
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('header-install-btn');
+    if (installBtn) installBtn.style.display = 'inline-flex';
+  });
+
+  window.addEventListener('appinstalled', () => {
+    const installBtn = document.getElementById('header-install-btn');
+    if (installBtn) installBtn.style.display = 'none';
+    deferredPrompt = null;
+    if (typeof showToast === 'function') showToast('App successfully installed!', 'success');
+  });
+
+  function installPWA() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User installed the PWA');
+        }
+        deferredPrompt = null;
+        const installBtn = document.getElementById('header-install-btn');
+        if (installBtn) installBtn.style.display = 'none';
+      });
+    }
+  }
+
   // Register Service Worker for PWA
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered:', reg.scope))
+        .then(reg => {
+          console.log('SW registered:', reg.scope);
+          reg.update();
+        })
         .catch(err => console.warn('SW registration failed:', err));
     });
   }

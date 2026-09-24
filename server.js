@@ -12,8 +12,6 @@ app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.static('public'));
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 // ─── Model fallback chain ─────────────────────────────────────────────────────
 const MODELS = [
   'gemini-3.6-flash',
@@ -23,10 +21,34 @@ const MODELS = [
   'gemini-flash-latest',
 ];
 
-async function generateWithFallback(parts) {
+function resolveApiKey(req, user) {
+  const headerKey = req.headers['x-gemini-key'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
+  const bodyKey = req.body?.geminiApiKey;
+  const userProfileKey = user?.geminiApiKey;
+  const userEnvKey = user ? process.env[`GEMINI_API_KEY_${(user.id || '').replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}`] : '';
+
+  // 1. Explicit key sent by client/user takes top priority
+  if (headerKey && headerKey.trim()) return headerKey.trim();
+  if (bodyKey && bodyKey.trim()) return bodyKey.trim();
+  if (userProfileKey && userProfileKey.trim()) return userProfileKey.trim();
+  if (userEnvKey && userEnvKey.trim()) return userEnvKey.trim();
+
+  // 2. Fallback to server's GEMINI_API_KEY if configured
+  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+    return process.env.GEMINI_API_KEY.trim();
+  }
+
+  return '';
+}
+
+async function generateWithFallback(parts, apiKey) {
+  if (!apiKey) {
+    throw new Error('Gemini API key is required. Please set your free Gemini API Key in the top-right settings.');
+  }
+  const ai = new GoogleGenerativeAI(apiKey);
   for (const modelName of MODELS) {
     try {
-      const model = genAI.getGenerativeModel({ model: modelName });
+      const model = ai.getGenerativeModel({ model: modelName });
       const result = await model.generateContent(parts);
       console.log(`Used model: ${modelName}`);
       return result;
@@ -219,16 +241,119 @@ app.get('/api/users', (req, res) => {
   res.json({ users });
 });
 
+// ─── POST /api/users — add or update user profile ─────────────────────────────
+app.post('/api/users', (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      phone,
+      linkedin,
+      experience,
+      skills,
+      aiTools,
+      strengths,
+      availability,
+      cvFile,
+      color,
+      gmailAppPassword,
+    } = req.body;
+
+    if (!name?.trim() || !email?.trim() || !phone?.trim() || !experience?.trim() || !skills?.trim()) {
+      return res.status(400).json({ error: 'Please fill in all required fields (Name, Email, Phone, Experience, Skills).' });
+    }
+
+    let finalCvFile = cvFile?.trim() || '';
+    if (req.body.cvBase64 && req.body.cvFileName) {
+      const cvDir = path.resolve(__dirname, 'public', 'cvs');
+      if (!fs.existsSync(cvDir)) fs.mkdirSync(cvDir, { recursive: true });
+      const cleanFileName = req.body.cvFileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const base64Data = req.body.cvBase64.replace(/^data:[^;]+;base64,/, '');
+      fs.writeFileSync(path.join(cvDir, cleanFileName), Buffer.from(base64Data, 'base64'));
+      finalCvFile = cleanFileName;
+    }
+
+    const users = loadUsers();
+    const id = req.body.id?.trim() || name.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanId = id.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
+
+    const initials =
+      req.body.initials?.trim() ||
+      name
+        .trim()
+        .split(/\s+/)
+        .map(w => w[0])
+        .join('')
+        .slice(0, 3)
+        .toUpperCase();
+
+    const userEntry = {
+      id,
+      name: name.trim(),
+      initials,
+      email: email.trim(),
+      phone: phone?.trim() || '',
+      linkedin: linkedin?.trim() || '',
+      experience: experience?.trim() || '',
+      skills: skills?.trim() || '',
+      aiTools: aiTools?.trim() || '',
+      strengths: strengths?.trim() || '',
+      availability: availability?.trim() || 'Immediately available',
+      cvFile: finalCvFile,
+      color: color?.trim() || '#00f3ff',
+    };
+
+    const existingIndex = users.findIndex(u => u.id === id);
+    if (existingIndex >= 0) {
+      users[existingIndex] = { ...users[existingIndex], ...userEntry };
+    } else {
+      users.push(userEntry);
+    }
+
+    // Save to users.local.json (always private and ignored by git)
+    fs.writeFileSync(USERS_LOCAL_PATH, JSON.stringify(users, null, 2));
+
+    // Save Gmail App Password to .env if provided
+    if (gmailAppPassword?.trim()) {
+      const envKey = `GMAIL_APP_PASSWORD_${cleanId}`;
+      process.env[envKey] = gmailAppPassword.trim();
+
+      const envPath = path.resolve(__dirname, '.env');
+      let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
+      const regex = new RegExp(`^${envKey}=.*`, 'm');
+      if (regex.test(envContent)) {
+        envContent = envContent.replace(regex, `${envKey}=${gmailAppPassword.trim()}`);
+      } else {
+        envContent = envContent.trimEnd() + `\n${envKey}=${gmailAppPassword.trim()}\n`;
+      }
+      fs.writeFileSync(envPath, envContent);
+    }
+
+    res.json({ success: true, user: userEntry });
+  } catch (err) {
+    console.error('Save user error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── POST /api/extract-image ──────────────────────────────────────────────────
 app.post('/api/extract-image', async (req, res) => {
   try {
-    const { imageData, mimeType } = req.body;
+    const { imageData, mimeType, userId } = req.body;
     if (!imageData) return res.status(400).json({ error: 'No image data provided' });
+
+    const user = userId ? getUser(userId) : null;
+    const apiKey = resolveApiKey(req, user);
+    if (!apiKey) {
+      return res.status(400).json({
+        error: 'Gemini API Key is required. Please set your free Gemini API key in the top-right settings (Get one free at https://aistudio.google.com/app/apikey).',
+      });
+    }
 
     const result = await generateWithFallback([
       { inlineData: { mimeType: mimeType || 'image/png', data: imageData } },
       'Extract the complete job posting text from this image. Return ONLY the raw text content exactly as it appears, preserving all details: company name, role, requirements, experience, location, contact emails and phone numbers. Do not add any commentary.',
-    ]);
+    ], apiKey);
 
     res.json({ text: result.response.text().trim() });
   } catch (err) {
@@ -244,9 +369,16 @@ app.post('/api/generate', async (req, res) => {
     if (!jobPost?.trim()) return res.status(400).json({ error: 'Job post text is required' });
 
     const user = getUser(userId);
+    const apiKey = resolveApiKey(req, user);
+    if (!apiKey) {
+      return res.status(400).json({
+        error: 'Gemini API Key is required. Please set your free Gemini API key in the top-right settings (Get one free at https://aistudio.google.com/app/apikey).',
+      });
+    }
+
     const parsed = parseJobPost(jobPost);
 
-    const result = await generateWithFallback(buildEmailPrompt(jobPost, user));
+    const result = await generateWithFallback(buildEmailPrompt(jobPost, user), apiKey);
     let text = stripFences(result.response.text().trim());
 
     const generated = JSON.parse(text);
@@ -363,7 +495,14 @@ Linkedin : ${user.linkedin}
 
 Return ONLY the email body text, no subject line, no JSON.`;
 
-    const result = await generateWithFallback(prompt);
+    const apiKey = resolveApiKey(req, user);
+    if (!apiKey) {
+      return res.status(400).json({
+        error: 'Gemini API Key is required. Please set your free Gemini API key in settings.',
+      });
+    }
+
+    const result = await generateWithFallback(prompt, apiKey);
     const followUpBody = result.response.text().trim();
 
     const transporter = nodemailer.createTransport({

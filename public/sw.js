@@ -1,10 +1,10 @@
-const CACHE_NAME = 'ai-emailer-v1';
+const CACHE_NAME = 'ai-emailer-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.jpg',
-  '/icon-512.jpg',
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
 // Install: cache static assets
