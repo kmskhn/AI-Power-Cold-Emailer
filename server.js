@@ -86,6 +86,14 @@ function getUsersFilePath() {
 }
 
 function loadUsers() {
+  if (process.env.USERS_JSON) {
+    try {
+      const parsed = JSON.parse(process.env.USERS_JSON);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {
+      console.error('Failed to parse USERS_JSON environment variable:', e.message);
+    }
+  }
   const filePath = getUsersFilePath();
   try { return JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch { return []; }
 }
