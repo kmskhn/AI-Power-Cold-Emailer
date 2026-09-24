@@ -1,0 +1,32 @@
+[
+  {
+    "id": "johnDev",
+    "name": "John Doe",
+    "initials": "JD",
+    "email": "johndoe@example.com",
+    "phone": "+1 555-0101",
+    "linkedin": "https://www.linkedin.com/in/johndoe-example",
+    "experience": "5+ years as a Full-Stack Engineer",
+    "skills": "React.js, Node.js, TypeScript, Next.js, Express, PostgreSQL, REST APIs",
+    "aiTools": "GitHub Copilot, ChatGPT",
+    "strengths": "Clean code architecture, frontend performance, responsive UI design",
+    "availability": "Immediately available",
+    "cvFile": "John-Doe-Resume.pdf",
+    "color": "#7c6ef7"
+  },
+  {
+    "id": "janeData",
+    "name": "Jane Smith",
+    "initials": "JS",
+    "email": "janesmith@example.com",
+    "phone": "+1 555-0102",
+    "linkedin": "https://www.linkedin.com/in/janesmith-example",
+    "experience": "4 years in Data Engineering",
+    "skills": "Python, SQL, PySpark, Azure Databricks, Data Lakehouse, ETL/ELT pipelines",
+    "aiTools": "Prompt Engineering, LLMs",
+    "strengths": "ETL pipeline optimization, data modeling, automated data validation",
+    "availability": "Immediate",
+    "cvFile": "Jane-Smith-Resume.pdf",
+    "color": "#ec4899"
+  }
+]

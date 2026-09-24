@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment files and credentials
+.env
+.env.local
+.env.*.local
+
+# Local user configs & data
+users.local.json
+users.json
+!users.example.json
+
+# Sent logs and run history
+sent_emails.json
+*.log
+
+# Personal files & PDFs
+*.pdf
+public/*.pdf
+public/cvs/*.pdf
+
+# OS files
+.DS_Store
+Thumbs.db

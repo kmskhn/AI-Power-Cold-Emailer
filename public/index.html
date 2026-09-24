@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Job Emailer</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><filter id='g'><feGaussianBlur stdDeviation='3'/></filter></defs><rect width='64' height='64' rx='6' fill='%2304050c'/><rect width='60' height='60' x='2' y='2' rx='5' fill='none' stroke='%2300f3ff' stroke-width='2'/><text x='50%25' y='55%25' font-size='32' text-anchor='middle' dominant-baseline='middle' filter='url(%23g)' fill='%23ff007f'>⚡</text><text x='50%25' y='55%25' font-size='32' text-anchor='middle' dominant-baseline='middle' fill='%2300f3ff'>⚡</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #04050c;
+      --surface: rgba(8, 12, 28, 0.88);
+      --glass: rgba(0, 243, 255, 0.05);
+      --border: rgba(0, 243, 255, 0.22);
+      
+      /* ── Fluorescent Cyberpunk Colors ── */
+      --neon-cyan: #00f3ff;
+      --neon-pink: #ff007f;
+      --neon-yellow: #ffe600;
+      --neon-green: #39ff14;
+      --neon-purple: #bc13fe;
+      
+      --accent: var(--neon-cyan);
+      --accent2: var(--neon-pink);
+      --success: var(--neon-green);
+      --danger: #ff0055;
+      --warning: var(--neon-yellow);
+      --text: #e0f2fe;
+      --muted: #64748b;
+      --hint: var(--neon-yellow);
+      --radius: 6px;
+    }
+
+    body {
+      font-family: 'Rajdhani', 'Inter', sans-serif;
+      background-color: var(--bg);
+      background-image: 
+        linear-gradient(rgba(0, 243, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.04) 1px, transparent 1px),
+        radial-gradient(circle at 10% 10%, rgba(0, 243, 255, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 90% 20%, rgba(255, 0, 127, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 90%, rgba(188, 19, 254, 0.08) 0%, transparent 50%);
+      background-size: 36px 36px, 36px 36px, 100% 100%, 100% 100%, 100% 100%;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      letter-spacing: 0.02em;
+    }
+
+    /* Ambient scanline overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 1px, transparent 1px, transparent 3px);
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0.35;
+    }
+
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(4, 6, 16, 0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.25), inset 0 -1px 0 rgba(255, 0, 127, 0.4);
+      padding: 0 32px; height: 62px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem; font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 12px rgba(0, 243, 255, 0.7);
+    }
+    .logo-icon {
+      width: 34px; height: 34px; border-radius: 4px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+      color: #04050c;
+    }
+    .header-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 12px; border-radius: 4px;
+      background: rgba(255, 230, 0, 0.08);
+      color: var(--neon-yellow);
+      border: 1px solid var(--neon-yellow);
+      box-shadow: 0 0 12px rgba(255, 230, 0, 0.35);
+    }
+
+    main {
+      position: relative; z-index: 1;
+      max-width: 1440px; margin: 0 auto;
+      padding: 24px; display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      position: relative;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 243, 255, 0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .panel::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-pink), transparent);
+      opacity: 0.75;
+      pointer-events: none;
+    }
+    .panel:hover {
+      border-color: rgba(0, 243, 255, 0.45);
+      box-shadow: 0 6px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 243, 255, 0.12);
+    }
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(0, 243, 255, 0.18);
+      background: linear-gradient(90deg, rgba(0, 243, 255, 0.08), rgba(255, 0, 127, 0.03) 70%, transparent);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.82rem; font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+    }
+    .step-badge {
+      width: 24px; height: 24px; border-radius: 4px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 900;
+      font-family: 'Orbitron', sans-serif;
+      color: #04050c;
+      flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.6);
+    }
+
+    /* ── User selector ── */
+    #panel-users {
+      grid-column: 1 / 3;
+      padding: 14px 20px;
+      display: flex; align-items: center;
+      gap: 12px; flex-wrap: wrap;
+      background: rgba(6, 10, 24, 0.95);
+      border-color: rgba(0, 243, 255, 0.35);
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.09);
+    }
+    #panel-users .users-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem; font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+      white-space: nowrap;
+    }
+    .user-card {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 9px 18px; border-radius: 4px; cursor: pointer;
+      border: 1.5px solid rgba(0, 243, 255, 0.25);
+      background: rgba(0, 243, 255, 0.03);
+      transition: all 0.2s ease; user-select: none;
+    }
+    .user-card:hover {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 243, 255, 0.1);
+      box-shadow: 0 0 14px rgba(0, 243, 255, 0.35);
+      transform: translateY(-1px);
+    }
+    .user-card.active {
+      border-color: var(--neon-pink);
+      background: rgba(255, 0, 127, 0.14);
+      box-shadow: 0 0 18px rgba(255, 0, 127, 0.45);
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem; font-weight: 900;
+      color: #04050c; flex-shrink: 0;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .user-card-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.04em;
+    }
+    .user-card-email {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 6px rgba(0, 243, 255, 0.35);
+    }
+    .user-card-check {
+      width: 14px; height: 14px; border-radius: 2px;
+      border: 2px solid rgba(0, 243, 255, 0.4);
+      flex-shrink: 0; transition: all 0.2s;
+    }
+    .user-card.active .user-card-check {
+      background: var(--neon-pink);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 10px var(--neon-pink);
+    }
+    .btn-add-user {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: 4px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border: 1.5px dashed var(--neon-cyan);
+      background: rgba(0, 243, 255, 0.05);
+      color: var(--neon-cyan);
+      transition: all 0.2s;
+    }
+    .btn-add-user:hover {
+      border-color: var(--neon-pink);
+      color: var(--neon-pink);
+      background: rgba(255, 0, 127, 0.1);
+      box-shadow: 0 0 14px rgba(255, 0, 127, 0.4);
+    }
+
+    /* ── Input tabs ── */
+    .input-tabs { display: flex; padding: 12px 20px 0; gap: 6px; }
+    .tab-btn {
+      padding: 8px 18px; border-radius: 4px 4px 0 0;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      border-bottom: none;
+      background: rgba(0, 0, 0, 0.4);
+      color: var(--muted);
+      transition: all 0.18s;
+    }
+    .tab-btn.active {
+      background: rgba(0, 243, 255, 0.15);
+      color: var(--neon-cyan);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 -3px 12px rgba(0, 243, 255, 0.35);
+      text-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+    }
+
+    /* ── Drop zone ── */
+    #drop-zone {
+      margin: 0 20px 16px;
+      border: 2px dashed rgba(0, 243, 255, 0.35);
+      border-radius: 4px;
+      min-height: 220px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; cursor: pointer;
+      background: rgba(0, 243, 255, 0.02);
+      transition: all 0.2s;
+    }
+    #drop-zone:not(.disabled):hover, #drop-zone:not(.disabled).drag-over {
+      border-color: var(--neon-pink);
+      background: rgba(255, 0, 127, 0.06);
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.3);
+    }
+    #drop-zone.disabled {
+      border-color: rgba(255, 255, 255, 0.12);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    #drop-zone.disabled:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(0, 243, 255, 0.02);
+      box-shadow: none;
+    }
+    #drop-zone .dz-icon { font-size: 2.6rem; filter: drop-shadow(0 0 10px var(--neon-cyan)); }
+    #drop-zone p { font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text); text-align: center; }
+    #drop-zone .dz-hint { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--neon-yellow); opacity: 0.85; }
+    #file-input { display: none; }
+    #img-preview { max-height: 180px; border-radius: 4px; object-fit: contain; display: none; max-width: 100%; border: 1px solid var(--neon-cyan); box-shadow: 0 0 12px rgba(0, 243, 255, 0.4); }
+    #img-preview.shown { display: block; }
+
+    .paste-area {
+      flex: 1; background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(0, 243, 255, 0.15);
+      border-radius: 0; outline: none; resize: none;
+      width: 100%; padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem; line-height: 1.7;
+      color: #e0f2fe; min-height: 340px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .paste-area:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 16px rgba(0, 243, 255, 0.35), inset 0 0 12px rgba(0, 243, 255, 0.05);
+    }
+    .paste-area:disabled {
+      background: rgba(0, 0, 0, 0.25);
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #64748b;
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+    .paste-area::placeholder { color: #475569; }
+
+    .input-footer {
+      padding: 14px 20px;
+      border-top: 1px solid rgba(0, 243, 255, 0.2);
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 4px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.82rem; font-weight: 800;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; border: none;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon-cyan), #0077ff);
+      color: #04050c;
+      box-shadow: 0 0 18px rgba(0, 243, 255, 0.55);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.9);
+    }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    
+    .btn-success {
+      background: linear-gradient(135deg, var(--neon-green), #00bb33);
+      color: #04050c;
+      box-shadow: 0 0 18px rgba(57, 255, 20, 0.55);
+    }
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(57, 255, 20, 0.9);
+    }
+    .btn-success:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    
+    .btn-ghost {
+      background: rgba(0, 243, 255, 0.06);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 0.88rem;
+    }
+    .btn-ghost:hover {
+      background: rgba(0, 243, 255, 0.18);
+      box-shadow: 0 0 14px rgba(0, 243, 255, 0.4);
+    }
+    .btn-whatsapp {
+      background: linear-gradient(135deg, #00ff66, #009933);
+      color: #04050c;
+      box-shadow: 0 0 18px rgba(0, 255, 102, 0.5);
+    }
+    .btn-whatsapp:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 28px rgba(0, 255, 102, 0.85);
+    }
+    .btn-followup {
+      background: linear-gradient(135deg, var(--neon-yellow), #ff9900);
+      color: #04050c;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 800; font-size: 0.82rem;
+      padding: 6px 14px; border-radius: 4px;
+      box-shadow: 0 0 12px rgba(255, 230, 0, 0.45);
+    }
+    .btn-followup:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 20px rgba(255, 230, 0, 0.8);
+    }
+    .btn-followup:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .char-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem; color: var(--neon-yellow);
+      margin-left: auto; text-shadow: 0 0 6px rgba(255, 230, 0, 0.4);
+    }
+
+    /* ── Parsed panel ── */
+    #panel-parsed { grid-column: 2; }
+    .parsed-grid { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+    .field-row { display: flex; flex-direction: column; gap: 6px; }
+    .field-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 6px rgba(0, 243, 255, 0.4);
+    }
+    .field-value {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; color: var(--text);
+      font-weight: 600; letter-spacing: 0.02em;
+    }
+    .field-empty {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--neon-yellow);
+      font-style: italic; font-size: 0.82rem;
+      text-shadow: 0 0 6px rgba(255, 230, 0, 0.3);
+    }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 4px;
+      font-size: 0.8rem; font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .tag-email {
+      background: rgba(0, 243, 255, 0.12);
+      color: var(--neon-cyan);
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    }
+    .tag-email:hover {
+      background: rgba(0, 243, 255, 0.25);
+      box-shadow: 0 0 18px rgba(0, 243, 255, 0.6);
+    }
+    .tag-phone {
+      background: rgba(255, 230, 0, 0.12);
+      color: var(--neon-yellow);
+      border: 1px solid var(--neon-yellow);
+      box-shadow: 0 0 10px rgba(255, 230, 0, 0.3);
+    }
+    .recipients-edit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem; width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      border-radius: 4px; padding: 9px 12px;
+      color: var(--text); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .recipients-edit:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+    .dot-yellow { background: var(--neon-yellow); box-shadow: 0 0 10px var(--neon-yellow); }
+
+    /* ── Email preview panel ── */
+    #panel-preview { grid-column: 1; }
+    .subject-input {
+      width: 100%; background: rgba(0, 0, 0, 0.35);
+      border: none; outline: none;
+      padding: 16px 20px 12px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.05rem; font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--neon-yellow);
+      border-bottom: 1px solid rgba(0, 243, 255, 0.25);
+    }
+    .subject-input::placeholder { color: #475569; }
+    .body-textarea {
+      flex: 1; background: rgba(0, 0, 0, 0.3);
+      border: none; outline: none; resize: none;
+      width: 100%; padding: 18px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.86rem; line-height: 1.8;
+      color: #f1f5f9; min-height: 260px;
+    }
+    .body-textarea::placeholder { color: #475569; }
+    .preview-footer {
+      padding: 14px 20px;
+      border-top: 1px solid rgba(0, 243, 255, 0.2);
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(0, 0, 0, 0.35);
+    }
+    .empty-state {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; padding: 40px; text-align: center;
+      color: var(--neon-yellow);
+    }
+    .empty-state .icon { font-size: 2.8rem; filter: drop-shadow(0 0 12px var(--neon-cyan)); opacity: 0.75; }
+    .empty-state p { font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600; line-height: 1.5; color: var(--text-dim); }
+
+    /* ── WhatsApp panel ── */
+    #panel-whatsapp { grid-column: 1 / 3; display: none; }
+    .wa-phone-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .wa-phone-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 4px;
+      cursor: pointer; font-size: 0.82rem; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0, 255, 102, 0.12);
+      color: var(--neon-green);
+      border: 1px solid var(--neon-green);
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+      transition: all 0.2s;
+    }
+    .wa-phone-tag:hover {
+      background: rgba(0, 255, 102, 0.25);
+      box-shadow: 0 0 18px rgba(0, 255, 102, 0.6);
+    }
+    .wa-phone-tag.selected {
+      background: rgba(0, 255, 102, 0.35);
+      box-shadow: 0 0 0 2px var(--neon-green), 0 0 15px var(--neon-green);
+    }
+    .wa-body-textarea {
+      width: 100%; background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(0, 255, 102, 0.3);
+      border-radius: 4px; padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem; line-height: 1.7;
+      color: #f0fdf4; outline: none;
+      resize: vertical; min-height: 120px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .wa-body-textarea:focus {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.4);
+    }
+
+    /* ── Log / history ── */
+    #panel-log { grid-column: 1 / 3; }
+    .log-list {
+      padding: 16px; display: flex;
+      flex-direction: column; gap: 8px;
+      max-height: 320px; overflow-y: auto;
+    }
+    .log-entry {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(0, 243, 255, 0.15);
+      border-radius: 4px;
+      border-left: 3px solid var(--neon-green);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.15);
+      transition: background 0.18s;
+    }
+    .log-entry:hover { background: rgba(0, 243, 255, 0.05); }
+    .log-entry.followed-up {
+      border-left-color: var(--neon-yellow);
+      box-shadow: 0 0 10px rgba(255, 230, 0, 0.15);
+    }
+    .log-entry-info { flex: 1; min-width: 0; }
+    .log-entry-subject {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .log-entry-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: var(--neon-cyan);
+      margin-top: 3px; opacity: 0.9;
+    }
+    .log-entry-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .log-empty {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem; color: var(--neon-yellow);
+      font-style: italic; padding: 16px 20px;
+    }
+
+    /* ── Follow-up modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(3, 4, 12, 0.82);
+      backdrop-filter: blur(8px);
+      z-index: 500; display: none;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #080c1e;
+      border: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 35px rgba(0, 243, 255, 0.4), inset 0 0 25px rgba(0, 0, 0, 0.8);
+      border-radius: 6px;
+      padding: 28px; max-width: 580px; width: 90%;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .modal-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem; font-weight: 800;
+      color: var(--neon-yellow);
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 10px rgba(255, 230, 0, 0.5);
+    }
+    .modal-body-preview {
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      border-radius: 4px; padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.83rem; line-height: 1.7;
+      color: #e2e8f0; max-height: 220px;
+      overflow-y: auto; white-space: pre-wrap;
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ── Spinner / Toast ── */
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid rgba(0, 243, 255, 0.25);
+      border-top-color: var(--neon-cyan);
+      animation: spin 0.7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #toast-container { position: fixed; top: 76px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+    .toast {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; border-radius: 4px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+      letter-spacing: 0.03em;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      animation: slideIn 0.3s ease; max-width: 400px;
+    }
+    .toast-success { background: rgba(57, 255, 20, 0.12); border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow: 0 0 16px rgba(57, 255, 20, 0.35); }
+    .toast-error   { background: rgba(255, 0, 85, 0.12); border: 1px solid #ff0055; color: #ff0055; box-shadow: 0 0 16px rgba(255, 0, 85, 0.35); }
+    .toast-info    { background: rgba(0, 243, 255, 0.12); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); box-shadow: 0 0 16px rgba(0, 243, 255, 0.35); }
+    @keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0, 243, 255, 0.3); border-radius: 2px; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } #panel-users, #panel-input, #panel-parsed, #panel-preview, #panel-whatsapp, #panel-log { grid-column: 1; grid-row: auto; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-icon">✉️</div> AI Job Emailer</div>
+  <span class="header-badge">Powered by <span style="color:var(--neon-cyan)"> MAK {Byte}</span></span>
+</header>
+
+<div id="toast-container"></div>
+
+<!-- Follow-up modal -->
+<div class="modal-overlay" id="followup-modal">
+  <div class="modal-box">
+    <div class="modal-title">🔁 Follow-up Preview</div>
+    <div style="font-size:0.8rem; color:var(--hint)" id="modal-to-label"></div>
+    <div class="modal-body-preview" id="modal-body-preview">Generating follow-up...</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-success" id="modal-send-btn" onclick="sendFollowUp()">🚀 Send Follow-up</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── User Selector ── -->
+  <div class="panel" id="panel-users" style="grid-column:1/3; grid-row:1">
+    <span class="users-label">Select Active User</span>
+    <div id="user-cards"></div>
+    <button class="btn-add-user" onclick="showAddUserHint()">+ Add User</button>
+  </div>
+
+  <!-- ── Left: Job Post Input ── -->
+  <div class="panel" id="panel-input" style="grid-column:1; grid-row:2/4">
+    <div class="panel-header">
+      <div class="step-badge">1</div>
+      <span class="panel-title">Job Post</span>
+    </div>
+    <div class="input-tabs">
+      <button class="tab-btn active" id="tab-text" onclick="switchTab('text')">📝 Paste Text</button>
+      <button class="tab-btn" id="tab-image" onclick="switchTab('image')">🖼️ Upload Screenshot</button>
+    </div>
+
+    <!-- Text tab -->
+    <div id="pane-text">
+      <textarea id="job-post" class="paste-area" placeholder="Paste the LinkedIn / WhatsApp job posting here and press Ctrl+Enter (or click Generate)..."></textarea>
+    </div>
+
+    <!-- Image tab -->
+    <div id="pane-image" style="display:none; padding:16px 0 0">
+      <div id="drop-zone" onclick="handleDropZoneClick()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <img id="img-preview" src="" alt="preview" />
+        <div id="dz-content" style="display:flex;flex-direction:column;align-items:center;gap:10px">
+          <div class="dz-icon">📸</div>
+          <p id="dz-text">Drag & drop a screenshot or <strong style="color:var(--neon-cyan)">click to browse</strong></p>
+          <span class="dz-hint" id="dz-hint">PNG, JPG, WEBP · Gemini Vision will read it</span>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)" />
+    </div>
+
+    <div class="input-footer">
+      <button class="btn btn-primary" id="btn-generate" onclick="generateEmail()">
+        <span id="gen-icon">✨</span><span id="gen-text">Generate Email</span>
+      </button>
+      <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+      <span class="char-hint" id="char-count">0 chars</span>
+    </div>
+  </div>
+
+  <!-- ── Right Top: Parsed Info ── -->
+  <div class="panel" id="panel-parsed" style="grid-column:2; grid-row:2">
+    <div class="panel-header">
+      <div class="step-badge">2</div>
+      <span class="panel-title">Parsed Info</span>
+      <span class="dot dot-yellow" id="parse-dot" style="margin-left:auto"></span>
+    </div>
+    <div class="parsed-grid" id="parsed-content">
+      <div class="empty-state" style="padding:24px">
+        <div class="icon">🔍</div>
+        <p>Parsed job details will appear here after you generate the email.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right Bottom: Email Preview ── -->
+  <div class="panel" id="panel-preview" style="grid-column:2; grid-row:3">
+    <div class="panel-header">
+      <div class="step-badge">3</div>
+      <span class="panel-title">Email Preview</span>
+      <span style="margin-left:auto; font-size:0.75rem; color:var(--hint)">Editable</span>
+    </div>
+    <div class="empty-state" id="preview-empty">
+      <div class="icon">📝</div>
+      <p>Your AI-generated email will appear here.<br/>You can edit it before sending.</p>
+    </div>
+    <input id="subject-input" class="subject-input" placeholder="Subject line..." style="display:none" />
+    <textarea id="body-textarea" class="body-textarea" placeholder="Email body..." style="display:none"></textarea>
+    <div class="preview-footer" id="preview-footer" style="display:none">
+      <button class="btn btn-success" id="btn-send" onclick="sendEmail()">
+        <span id="send-icon">🚀</span><span id="send-text">Send Email + CV</span>
+      </button>
+      <button class="btn btn-ghost" onclick="copyEmail()">📋 Copy</button>
+      <span id="send-status" style="font-size:0.78rem; color:var(--hint); margin-left:auto"></span>
+    </div>
+  </div>
+
+  <!-- ── WhatsApp Panel ── -->
+  <div class="panel" id="panel-whatsapp" style="grid-column:1/3">
+    <div class="panel-header">
+      <div class="step-badge" style="background:linear-gradient(135deg,#00ff66,#009933)">4</div>
+      <span class="panel-title" style="color:var(--neon-green)">💬 WhatsApp Message</span>
+      <span style="margin-left:auto; font-size:0.75rem; color:var(--hint)">Editable · Click phone to open WhatsApp</span>
+    </div>
+    <div style="padding:16px 20px; display:flex; flex-direction:column; gap:12px;">
+      <div class="wa-phone-tags" id="wa-phone-tags"></div>
+      <textarea id="wa-body" class="wa-body-textarea" placeholder="WhatsApp message will appear here..."></textarea>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-whatsapp" onclick="openWhatsApp()">📱 Open in WhatsApp</button>
+        <button class="btn btn-ghost" onclick="copyWA()">📋 Copy Message</button>
+        <span style="font-size:0.75rem; color:var(--hint); margin-left:auto">Attach CV manually in WhatsApp</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sent History ── -->
+  <div class="panel" id="panel-log" style="grid-column:1/3">
+    <div class="panel-header">
+      <span class="panel-title" id="log-title">📬 Sent History</span>
+      <span style="font-size:0.75rem; color:var(--hint); margin-left:8px">Click 🔁 to send a follow-up in the same thread</span>
+      <button class="btn btn-ghost" style="padding:4px 12px;font-size:0.75rem;margin-left:auto" onclick="loadLog()">Refresh</button>
+    </div>
+    <div id="log-list" class="log-list">
+      <div class="log-empty">No emails sent yet.</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  let parsedData = {};
+  let pendingFollowupId = null;
+  let pendingFollowupBody = null;
+  let currentTab = 'text';
+  let selectedImageData = null;
+  let selectedMimeType = null;
+  let activeUserId = null;
+  let allUsers = [];
+
+  // ── Load & render users ───────────────────────────────────────────────
+  async function loadUsers() {
+    try {
+      const res = await fetch('/api/users?_=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json();
+      allUsers = data.users || [];
+      const container = document.getElementById('user-cards');
+      container.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;';
+      container.innerHTML = allUsers.map(u => `
+        <div class="user-card" id="ucard-${u.id}" onclick="selectUser('${u.id}')">
+          <div class="user-avatar" style="background:${u.color||'#7c6ef7'}">${u.initials||u.name.split(' ').map(w=>w[0]).join('')}</div>
+          <div><div class="user-card-name">${u.name}</div><div class="user-card-email">${u.email}</div></div>
+          <div class="user-card-check" id="ucheck-${u.id}"></div>
+        </div>
+      `).join('');
+      selectUser(null, false);
+    } catch(e) { console.error('Failed to load users', e); }
+  }
+
+  function selectUser(id, reloadLog = true) {
+    activeUserId = id;
+    document.querySelectorAll('.user-card').forEach(c => c.classList.remove('active'));
+    if (id) {
+      const card = document.getElementById('ucard-' + id);
+      if (card) card.classList.add('active');
+    }
+    updateInputState();
+    if (reloadLog) loadLog();
+  }
+
+  function updateInputState() {
+    const hasUser = !!activeUserId;
+    const jobPost = document.getElementById('job-post');
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const btnGen = document.getElementById('btn-generate');
+    const dzText = document.getElementById('dz-text');
+    const dzHint = document.getElementById('dz-hint');
+
+    if (jobPost) {
+      jobPost.disabled = !hasUser;
+      jobPost.placeholder = hasUser
+        ? "Paste the LinkedIn / WhatsApp job posting here and press Ctrl+Enter (or click Generate)..."
+        : "⚠️ Please select an active user above before pasting job posting...";
+    }
+    if (fileInput) {
+      fileInput.disabled = !hasUser;
+    }
+    if (dropZone) {
+      dropZone.classList.toggle('disabled', !hasUser);
+    }
+    if (dzText) {
+      dzText.innerHTML = hasUser
+        ? 'Drag & drop a screenshot or <strong style="color:var(--neon-cyan)">click to browse</strong>'
+        : '<span style="color:var(--danger)">⚠️ Please select an active user above before uploading</span>';
+    }
+    if (dzHint) {
+      dzHint.style.display = hasUser ? 'block' : 'none';
+    }
+    if (btnGen) {
+      btnGen.disabled = !hasUser;
+      btnGen.title = hasUser ? '' : 'Please select an active user first';
+    }
+  }
+
+  function showAddUserHint() {
+    showToast('Add a new entry to emailer/users.json and restart the server.', 'info', 6000);
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'info', duration = 4000) {
+    const icons = { success: '✅', error: '❌', info: '💬' };
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, duration);
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-text').classList.toggle('active', tab === 'text');
+    document.getElementById('tab-image').classList.toggle('active', tab === 'image');
+    document.getElementById('pane-text').style.display = tab === 'text' ? 'block' : 'none';
+    document.getElementById('pane-image').style.display = tab === 'image' ? 'block' : 'none';
+  }
+
+  // ── Char counter ──────────────────────────────────────────────────────────
+  document.getElementById('job-post').addEventListener('input', function () {
+    document.getElementById('char-count').textContent = this.value.length + ' chars';
+  });
+  document.getElementById('job-post').addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateEmail();
+  });
+
+  // ── Image upload drag & drop ──────────────────────────────────────────────
+  function handleDropZoneClick() {
+    if (!activeUserId) {
+      showToast('Please select an active user first.', 'error');
+      return;
+    }
+    document.getElementById('file-input').click();
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    if (!activeUserId) return;
+    document.getElementById('drop-zone').classList.add('drag-over');
+  }
+
+  function onDragLeave() {
+    document.getElementById('drop-zone').classList.remove('drag-over');
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    onDragLeave();
+    if (!activeUserId) {
+      showToast('Please select an active user first.', 'error');
+      return;
+    }
+    const file = e.dataTransfer.files[0];
+    if (file) loadImageFile(file);
+  }
+
+  function onFileSelected(e) {
+    if (!activeUserId) {
+      showToast('Please select an active user first.', 'error');
+      return;
+    }
+    const file = e.target.files[0];
+    if (file) loadImageFile(file);
+  }
+
+  function loadImageFile(file) {
+    selectedMimeType = file.type;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      selectedImageData = dataUrl.split(',')[1];
+      const preview = document.getElementById('img-preview');
+      preview.src = dataUrl;
+      preview.classList.add('shown');
+      document.getElementById('dz-content').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+// ── Render parsed info ────────────────────────────────────────────────────
+  function renderParsed(data) {
+    parsedData = data;
+    const emailTags = data.emails.map(e =>
+      `<span class="tag tag-email" title="Click to remove" onclick="removeEmail(this,'${e}')">${e} ✕</span>`
+    ).join('') || '<span class="field-empty">No emails found</span>';
+    const phoneTags = data.phones.map(p =>
+      `<span class="tag tag-phone">${p}</span>`
+    ).join('') || '<span class="field-empty">Not found</span>';
+
+    document.getElementById('parsed-content').innerHTML = `
+      <div class="field-row"><span class="field-label">Company</span><span class="field-value">${data.company || '<span class="field-empty">Not detected</span>'}</span></div>
+      <div class="field-row"><span class="field-label">Role</span><span class="field-value">${data.role || '<span class="field-empty">Not detected</span>'}</span></div>
+      <div class="field-row"><span class="field-label">Experience Required</span><span class="field-value">${data.expRequired || '<span class="field-empty">Not specified</span>'}</span></div>
+      <div class="field-row"><span class="field-label">Location</span><span class="field-value">${data.location || '<span class="field-empty">Not specified</span>'}</span></div>
+      <div class="field-row">
+        <span class="field-label">Recipients (click to remove)</span>
+        <div class="tag-row" id="email-tags">${emailTags}</div>
+        <input id="extra-email" class="recipients-edit" placeholder="+ Add recipient email manually..." />
+      </div>
+      <div class="field-row"><span class="field-label">Phone(s)</span><div class="tag-row">${phoneTags}</div></div>
+    `;
+    document.getElementById('parse-dot').className = 'dot dot-green';
+  }
+
+  function removeEmail(el, email) { parsedData.emails = parsedData.emails.filter(e => e !== email); el.remove(); }
+
+  function getRecipients() {
+    const tags = [...parsedData.emails];
+    const extra = document.getElementById('extra-email')?.value.trim();
+    if (extra) tags.push(...extra.split(/[,;\s]+/).filter(e => e.includes('@')));
+    return [...new Set(tags)];
+  }
+
+  // ── Generate email (handles both text and image tabs) ────────────────────
+  async function generateEmail() {
+    if (!activeUserId) {
+      showToast('Please select an active user first.', 'error');
+      return;
+    }
+    const btn = document.getElementById('btn-generate');
+    btn.disabled = true;
+    document.getElementById('gen-icon').innerHTML = '<span class="spinner"></span>';
+
+    let jobPost = '';
+
+    try {
+      // If on image tab and image loaded → extract text first
+      if (currentTab === 'image' && selectedImageData) {
+        document.getElementById('gen-text').textContent = 'Reading image...';
+        const extRes = await fetch('/api/extract-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageData: selectedImageData, mimeType: selectedMimeType }),
+        });
+        const extData = await extRes.json();
+        if (!extRes.ok) throw new Error(extData.error || 'Image extraction failed');
+        jobPost = extData.text;
+        // Also populate textarea so user can see what was extracted
+        document.getElementById('job-post').value = jobPost;
+        document.getElementById('char-count').textContent = jobPost.length + ' chars';
+      } else {
+        jobPost = document.getElementById('job-post').value.trim();
+      }
+
+      if (!jobPost) { showToast('Please paste a job posting or upload an image.', 'error'); return; }
+
+      document.getElementById('gen-text').textContent = 'Generating...';
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobPost, userId: activeUserId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate');
+
+      renderParsed(data.parsed);
+
+      document.getElementById('preview-empty').style.display = 'none';
+      document.getElementById('subject-input').style.display = 'block';
+      document.getElementById('body-textarea').style.display = 'block';
+      document.getElementById('preview-footer').style.display = 'flex';
+      document.getElementById('subject-input').value = data.subject;
+      document.getElementById('body-textarea').value = data.body;
+
+      if (data.parsed.phones?.length) {
+        document.getElementById('wa-body').value = data.whatsapp || '';
+        document.getElementById('wa-phone-tags').innerHTML = data.parsed.phones.map((p, i) =>
+          `<span class="wa-phone-tag${i===0?' selected':''}" onclick="selectWAPhone(this)" data-phone="${p}">📱 ${p}</span>`
+        ).join('');
+        document.getElementById('panel-whatsapp').style.display = 'block';
+      } else {
+        document.getElementById('panel-whatsapp').style.display = 'none';
+      }
+
+      showToast('Email + WhatsApp message generated!', 'success');
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('gen-icon').textContent = '✨';
+      document.getElementById('gen-text').textContent = 'Generate Email';
+    }
+  }
+
+  // ── Send email ────────────────────────────────────────────────────────────
+  async function sendEmail() {
+    const recipients = getRecipients();
+    if (!recipients.length) { showToast('No recipient email found.', 'error'); return; }
+    const subject = document.getElementById('subject-input').value.trim();
+    const body = document.getElementById('body-textarea').value.trim();
+    if (!subject || !body) { showToast('Subject and body cannot be empty.', 'error'); return; }
+
+    const btn = document.getElementById('btn-send');
+    btn.disabled = true;
+    document.getElementById('send-icon').innerHTML = '<span class="spinner"></span>';
+    document.getElementById('send-text').textContent = 'Sending...';
+
+    try {
+      const res = await fetch('/api/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: recipients, subject, body, userId: activeUserId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      showToast(data.message, 'success', 6000);
+      document.getElementById('send-status').textContent = '✅ Sent ' + new Date().toLocaleTimeString();
+      loadLog();
+    } catch (e) {
+      showToast('Send error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('send-icon').textContent = '🚀';
+      document.getElementById('send-text').textContent = 'Send Email + CV';
+    }
+  }
+
+  // ── Follow-up ─────────────────────────────────────────────────────────────
+  async function initiateFollowup(id, to) {
+    pendingFollowupId = id;
+    pendingFollowupBody = null;
+    document.getElementById('modal-to-label').textContent = `To: ${to}`;
+    document.getElementById('modal-body-preview').textContent = '⏳ Generating follow-up with Gemini...';
+    document.getElementById('modal-send-btn').disabled = true;
+    document.getElementById('followup-modal').classList.add('open');
+
+    try {
+      const res = await fetch('/api/followup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      // Follow-up was sent by server directly
+      pendingFollowupBody = data.body;
+      document.getElementById('modal-body-preview').textContent = data.body;
+      document.getElementById('modal-send-btn').textContent = '✅ Sent!';
+      document.getElementById('modal-send-btn').disabled = true;
+      showToast('Follow-up sent successfully!', 'success');
+      loadLog();
+    } catch (e) {
+      document.getElementById('modal-body-preview').textContent = 'Error: ' + e.message;
+      showToast('Follow-up error: ' + e.message, 'error');
+      document.getElementById('followup-modal').classList.remove('open');
+    }
+  }
+
+  function sendFollowUp() { /* handled server-side on initiate */ closeModal(); }
+  function closeModal() {
+    document.getElementById('followup-modal').classList.remove('open');
+    document.getElementById('modal-send-btn').textContent = '🚀 Send Follow-up';
+    document.getElementById('modal-send-btn').disabled = false;
+    pendingFollowupId = null;
+  }
+
+  // ── WhatsApp ──────────────────────────────────────────────────────────────
+  function selectWAPhone(el) { document.querySelectorAll('.wa-phone-tag').forEach(t => t.classList.remove('selected')); el.classList.add('selected'); }
+  function getWAPhone() { return (document.querySelector('.wa-phone-tag.selected') || document.querySelector('.wa-phone-tag'))?.dataset.phone || ''; }
+  function openWhatsApp() {
+    const phone = getWAPhone();
+    if (!phone) { showToast('No phone found.', 'error'); return; }
+    let cleaned = phone.replace(/[\s\-()]/g, '');
+    if (cleaned.startsWith('0')) cleaned = '91' + cleaned.slice(1);
+    if (!cleaned.startsWith('+') && !cleaned.startsWith('91')) cleaned = '91' + cleaned;
+    cleaned = cleaned.replace(/^\+/, '');
+    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(document.getElementById('wa-body').value.trim())}`, '_blank');
+  }
+  function copyWA() { navigator.clipboard.writeText(document.getElementById('wa-body').value); showToast('WhatsApp message copied!', 'success', 2000); }
+  function copyEmail() {
+    const s = document.getElementById('subject-input').value;
+    const b = document.getElementById('body-textarea').value;
+    navigator.clipboard.writeText(`Subject: ${s}\n\n${b}`);
+    showToast('Copied!', 'success', 2000);
+  }
+
+  // ── Clear ─────────────────────────────────────────────────────────────────
+  function clearAll() {
+    document.getElementById('job-post').value = '';
+    document.getElementById('char-count').textContent = '0 chars';
+    document.getElementById('subject-input').value = '';
+    document.getElementById('body-textarea').value = '';
+    document.getElementById('preview-empty').style.display = 'flex';
+    document.getElementById('subject-input').style.display = 'none';
+    document.getElementById('body-textarea').style.display = 'none';
+    document.getElementById('preview-footer').style.display = 'none';
+    document.getElementById('panel-whatsapp').style.display = 'none';
+    document.getElementById('parsed-content').innerHTML = `<div class="empty-state" style="padding:24px"><div class="icon">🔍</div><p>Parsed details will appear here.</p></div>`;
+    document.getElementById('parse-dot').className = 'dot dot-yellow';
+    // Reset image upload
+    selectedImageData = null; selectedMimeType = null;
+    document.getElementById('img-preview').classList.remove('shown');
+    document.getElementById('dz-content').style.display = 'flex';
+    parsedData = {};
+  }
+
+  // ── Load history ──────────────────────────────────────────────────────────
+  async function loadLog() {
+    const titleEl = document.getElementById('log-title');
+    const selectedUserObj = allUsers.find(u => u.id === activeUserId);
+    if (titleEl) {
+      titleEl.textContent = selectedUserObj
+        ? `📬 Sent History — ${selectedUserObj.name}`
+        : '📬 Sent History (All / No User Selected)';
+    }
+
+    try {
+      const queryParams = new URLSearchParams();
+      if (activeUserId) queryParams.set('userId', activeUserId);
+      queryParams.set('_', Date.now());
+
+      const res = await fetch('/api/log?' + queryParams.toString(), { cache: 'no-store' });
+      const data = await res.json();
+      const list = document.getElementById('log-list');
+      if (!data.entries || !data.entries.length) {
+        list.innerHTML = `<div class="log-empty">No sent emails recorded${selectedUserObj ? ' for ' + selectedUserObj.name : ''}.</div>`;
+        return;
+      }
+      list.innerHTML = data.entries.map(e => {
+        const date = new Date(e.timestamp).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+        const senderObj = allUsers.find(u => u.id === e.userId) || allUsers[0];
+        const senderBadge = senderObj
+          ? `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:0.68rem;background:rgba(0,243,255,0.12);border:1px solid rgba(0,243,255,0.4);color:var(--neon-cyan);margin-right:6px;">${senderObj.name}</span>`
+          : '';
+        const followedLabel = e.followedUp
+          ? `<span style="font-size:0.7rem;color:var(--neon-yellow);margin-left:6px;">↩ Followed up ${new Date(e.followUpTime).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`
+          : '';
+        return `
+          <div class="log-entry${e.followedUp ? ' followed-up' : ''}">
+            <div class="log-entry-info">
+              <div class="log-entry-subject">${e.subject}</div>
+              <div class="log-entry-meta">${senderBadge}To: ${e.to} &nbsp;·&nbsp; ${date} ${followedLabel}</div>
+            </div>
+            <div class="log-entry-actions">
+              <button class="btn btn-followup" ${e.followedUp ? 'disabled title="Already followed up"' : `onclick="initiateFollowup('${e.id}','${e.to}')"`}>
+                🔁 Follow Up
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load log', err);
+    }
+  }
+
+  updateInputState();
+  loadUsers();
+  loadLog();
+</script>
+</body>
+</html>
