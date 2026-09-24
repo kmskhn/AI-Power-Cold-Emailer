@@ -14,10 +14,10 @@ app.use(express.static('public'));
 
 // ─── Model fallback chain ─────────────────────────────────────────────────────
 const MODELS = [
-  'gemini-3.5-flash-lite',
+  'gemini-3-flash-preview',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
-  'gemini-flash-latest',
+  'gemini-3.5-flash-lite',
 ];
 
 function resolveApiKey(req, user) {
@@ -45,14 +45,17 @@ async function generateWithFallback(parts, apiKey) {
     throw new Error('Gemini API key is required. Please set your free Gemini API Key in the top-right settings.');
   }
   const ai = new GoogleGenerativeAI(apiKey);
+  let lastError = null;
+
   for (const modelName of MODELS) {
     try {
-      // 12s fast failover timeout to avoid stalling on overloaded Google free tier endpoints
-      const model = ai.getGenerativeModel({ model: modelName }, { timeout: 12000 });
+      // 25s timeout to give Google sufficient runway under heavy free tier demand
+      const model = ai.getGenerativeModel({ model: modelName }, { timeout: 25000 });
       const result = await model.generateContent(parts);
       console.log(`Used model: ${modelName}`);
       return result;
     } catch (err) {
+      lastError = err;
       const retryable =
         err.message?.includes('503') ||
         err.message?.includes('overloaded') ||
@@ -65,9 +68,13 @@ async function generateWithFallback(parts, apiKey) {
         console.warn(`Model ${modelName} failed or timed out (${err.message.slice(0, 60)}), trying next...`);
         continue;
       }
-      throw err;
     }
   }
+
+  if (lastError?.message?.includes('503') || lastError?.message?.includes('high demand')) {
+    throw new Error('Google Gemini servers are currently experiencing high demand. Please try again in 5–10 seconds.');
+  }
+  throw lastError;
 }
 
 // ─── Human-in-the-loop quality check prompt ───────────────────────────────────
