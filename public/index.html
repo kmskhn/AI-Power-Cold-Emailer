@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Job Emailer</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#00f3ff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AI Emailer" />
+  <link rel="apple-touch-icon" href="/icon-192.jpg" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><filter id='g'><feGaussianBlur stdDeviation='3'/></filter></defs><rect width='64' height='64' rx='6' fill='%2304050c'/><rect width='60' height='60' x='2' y='2' rx='5' fill='none' stroke='%2300f3ff' stroke-width='2'/><text x='50%25' y='55%25' font-size='32' text-anchor='middle' dominant-baseline='middle' filter='url(%23g)' fill='%23ff007f'>⚡</text><text x='50%25' y='55%25' font-size='32' text-anchor='middle' dominant-baseline='middle' fill='%2300f3ff'>⚡</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1202,6 +1209,17 @@
   updateInputState();
   loadUsers();
   loadLog();
+</script>
+
+<script>
+  // Register Service Worker for PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.warn('SW registration failed:', err));
+    });
+  }
 </script>
 </body>
 </html>
