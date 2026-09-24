@@ -14,10 +14,9 @@ app.use(express.static('public'));
 
 // ─── Model fallback chain ─────────────────────────────────────────────────────
 const MODELS = [
+  'gemini-3.5-flash-lite',
   'gemini-3.6-flash',
   'gemini-3.5-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-2.5-flash',
   'gemini-flash-latest',
 ];
 
@@ -48,15 +47,22 @@ async function generateWithFallback(parts, apiKey) {
   const ai = new GoogleGenerativeAI(apiKey);
   for (const modelName of MODELS) {
     try {
-      const model = ai.getGenerativeModel({ model: modelName });
+      // 12s fast failover timeout to avoid stalling on overloaded Google free tier endpoints
+      const model = ai.getGenerativeModel({ model: modelName }, { timeout: 12000 });
       const result = await model.generateContent(parts);
       console.log(`Used model: ${modelName}`);
       return result;
     } catch (err) {
-      const retryable = err.message?.includes('503') || err.message?.includes('overloaded') ||
-        err.message?.includes('high demand') || err.message?.includes('404');
+      const retryable =
+        err.message?.includes('503') ||
+        err.message?.includes('overloaded') ||
+        err.message?.includes('high demand') ||
+        err.message?.includes('404') ||
+        err.message?.includes('aborted') ||
+        err.name === 'AbortError' ||
+        err.message?.includes('timeout');
       if (retryable && MODELS.indexOf(modelName) < MODELS.length - 1) {
-        console.warn(`Model ${modelName} failed (${err.message.slice(0, 60)}), trying next...`);
+        console.warn(`Model ${modelName} failed or timed out (${err.message.slice(0, 60)}), trying next...`);
         continue;
       }
       throw err;
