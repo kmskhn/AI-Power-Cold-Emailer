@@ -1,49 +1,120 @@
-const CACHE_NAME = 'ai-emailer-v2';
+const CACHE_NAME = 'ai-emailer-v3';
+
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
 ];
 
-// Install: cache static assets
+// ─────────────────────────────────────────────────────────────
+// INSTALL
+// ─────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
+
   self.skipWaiting();
 });
 
-// Activate: clean up old caches
+// ─────────────────────────────────────────────────────────────
+// ACTIVATE
+// ─────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
     )
   );
+
   self.clients.claim();
 });
 
-// Fetch: network-first for API calls, cache-first for static assets
+// ─────────────────────────────────────────────────────────────
+// FETCH
+// ─────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const request = event.request;
+  const url = new URL(request.url);
 
-  // Always go network-first for API requests
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        new Response(JSON.stringify({ error: 'You are offline. Please check your connection.' }), {
-          headers: { 'Content-Type': 'application/json' },
-          status: 503,
-        })
-      )
-    );
+  // Only handle same-origin requests
+  if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Cache-first for static assets
+  // ───────────────────────────────────────────────────────────
+  // API → ALWAYS NETWORK
+  // ───────────────────────────────────────────────────────────
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request).catch(() =>
+        new Response(
+          JSON.stringify({
+            error: 'You are offline. Please check your connection.',
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            status: 503,
+          }
+        )
+      )
+    );
+
+    return;
+  }
+
+  // ───────────────────────────────────────────────────────────
+  // HTML / PAGE NAVIGATION → NETWORK FIRST
+  // ───────────────────────────────────────────────────────────
+  if (request.mode === 'navigate' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Keep a fresh copy as offline fallback
+          const responseClone = response.clone();
+
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put('/index.html', responseClone);
+          });
+
+          return response;
+        })
+        .catch(() => {
+          return caches.match('/index.html');
+        })
+    );
+
+    return;
+  }
+
+  // ───────────────────────────────────────────────────────────
+  // STATIC ASSETS → CACHE FIRST
+  // ───────────────────────────────────────────────────────────
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(request).then((cached) => {
+      if (cached) {
+        return cached;
+      }
+
+      return fetch(request).then((response) => {
+        if (response.ok) {
+          const responseClone = response.clone();
+
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
+
+        return response;
+      });
+    })
   );
 });

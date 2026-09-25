@@ -815,46 +815,6 @@
       .form-grid-2 { grid-template-columns: 1fr; }
     }
 
-    /* ── Gemini Key Button & Indicator ── */
-    .btn-api-key {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 6px 14px; border-radius: 4px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      cursor: pointer;
-      background: rgba(0, 243, 255, 0.08);
-      border: 1px solid rgba(0, 243, 255, 0.4);
-      color: var(--neon-cyan);
-      box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-      transition: all 0.2s;
-    }
-    .btn-api-key:hover {
-      background: rgba(0, 243, 255, 0.2);
-      box-shadow: 0 0 16px rgba(0, 243, 255, 0.5);
-      transform: translateY(-1px);
-    }
-    .btn-api-key.key-missing {
-      border-color: var(--neon-yellow);
-      color: var(--neon-yellow);
-      background: rgba(255, 230, 0, 0.1);
-      box-shadow: 0 0 12px rgba(255, 230, 0, 0.35);
-      animation: pulseKey 2.2s infinite;
-    }
-    @keyframes pulseKey {
-      0%, 100% { box-shadow: 0 0 8px rgba(255, 230, 0, 0.25); }
-      50% { box-shadow: 0 0 18px rgba(255, 230, 0, 0.65); }
-    }
-    .key-badge-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--neon-green);
-      box-shadow: 0 0 8px var(--neon-green);
-      display: inline-block;
-    }
-    .key-badge-dot.missing {
-      background: var(--neon-yellow);
-      box-shadow: 0 0 8px var(--neon-yellow);
-    }
     .btn-install {
       display: inline-flex;
       align-items: center;
@@ -1177,49 +1137,13 @@
     <button class="btn-install" id="header-install-btn" onclick="installPWA()" style="display:none;">
       📲 Install App
     </button>
-    <button class="btn-api-key" id="header-key-btn" onclick="openApiKeyModal()">
-      <span id="key-badge-dot" class="key-badge-dot"></span>
-      <span id="key-badge-text">Gemini Key</span>
-    </button>
+    <span class="header-badge">AI: <span style="color:var(--neon-cyan)">OpenRouter</span></span>
     <span class="header-badge">Powered by <span style="color:var(--neon-cyan)"> MAK {Byte}</span></span>
   </div>
 </header>
 
 <div id="toast-container"></div>
 
-<!-- Gemini API Key Modal -->
-<div class="modal-overlay" id="api-key-modal">
-  <div class="modal-box" style="max-width: 520px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div class="modal-title">🔑 Gemini API Key</div>
-      <button class="cam-btn" type="button" style="width:34px; height:34px; font-size:0.85rem;" onclick="closeApiKeyModal()">✕</button>
-    </div>
-
-    <p style="font-size:0.88rem; line-height:1.6; color:#cbd5e1;">
-      Each user provides their own Gemini API key so that shared token limits and quotas are not exhausted. Keys are stored locally in your browser.
-    </p>
-
-    <div style="background:rgba(0,243,255,0.06); border:1px solid rgba(0,243,255,0.25); border-radius:4px; padding:12px; font-size:0.82rem; color:var(--text);">
-      💡 <strong>Get a Free Key:</strong> Generate a free Gemini API key in 30 seconds at 
-      <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--neon-cyan); text-decoration:underline;">Google AI Studio ↗</a>.
-    </div>
-
-    <div class="form-group" style="margin-top:4px;">
-      <label class="form-label">Your Google Gemini Key</label>
-      <div style="position:relative;">
-        <input class="form-input" id="input-gemini-key" type="password" placeholder="AIzaSy... or AQ...." style="padding-right:40px; font-family:'JetBrains Mono',monospace; font-size:0.85rem;" />
-        <button type="button" onclick="toggleKeyVisibility()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--neon-cyan); cursor:pointer; font-size:1.05rem;">👁️</button>
-      </div>
-      <span id="key-saved-hint" style="font-size:0.75rem; color:var(--neon-green); display:none;">✅ Key is saved in this browser's localStorage</span>
-    </div>
-
-    <div class="modal-actions" style="margin-top:6px;">
-      <button type="button" class="btn btn-ghost" style="color:var(--danger); border-color:var(--danger);" onclick="removeGeminiKey()">Clear Key</button>
-      <button type="button" class="btn btn-ghost" onclick="closeApiKeyModal()">Cancel</button>
-      <button type="button" class="btn btn-primary" onclick="saveGeminiKey()">💾 Save Key</button>
-    </div>
-  </div>
-</div>
 
 <!-- Follow-up modal -->
 <div class="modal-overlay" id="followup-modal">
@@ -1253,8 +1177,8 @@
     </div>
     <div class="input-tabs">
       <button class="tab-btn active" id="tab-text" onclick="switchTab('text')">📝 Paste Text</button>
-      <button class="tab-btn" id="tab-upload" onclick="switchTab('upload')">📁 Upload Image</button>
-      <button class="tab-btn" id="tab-capture" onclick="switchTab('capture')">📷 Capture Photo</button>
+      <!-- <button disabled="true" class="tab-btn" id="tab-upload" onclick="switchTab('upload')">📁 Upload Image</button>
+      <button disabled="true" class="tab-btn" id="tab-capture" onclick="switchTab('capture')">📷 Capture Photo</button> -->
     </div>
 
     <!-- Tab 1: Paste Text -->
@@ -1542,60 +1466,6 @@
     }
   }
 
-  // ── Gemini API Key Client Management ─────────────────────────────────────
-  function getStoredGeminiKey() {
-    return (localStorage.getItem('gemini_api_key') || '').trim();
-  }
-
-  function updateKeyBadge() {
-    const key = getStoredGeminiKey();
-    const dot = document.getElementById('key-badge-dot');
-    const text = document.getElementById('key-badge-text');
-    const hint = document.getElementById('key-saved-hint');
-    if (dot) dot.classList.toggle('active', !!key);
-    if (text) text.textContent = key ? 'Gemini Key: Active' : '🔑 Gemini Key';
-    if (hint) hint.style.display = key ? 'inline-block' : 'none';
-  }
-
-  function openApiKeyModal() {
-    const input = document.getElementById('input-gemini-key');
-    if (input) input.value = getStoredGeminiKey();
-    updateKeyBadge();
-    document.getElementById('api-key-modal').classList.add('open');
-  }
-
-  function closeApiKeyModal() {
-    document.getElementById('api-key-modal').classList.remove('open');
-  }
-
-  function saveGeminiKey() {
-    const input = document.getElementById('input-gemini-key');
-    const val = (input?.value || '').trim();
-    if (!val) {
-      showToast('Please enter a valid Gemini API key.', 'error');
-      return;
-    }
-    localStorage.setItem('gemini_api_key', val);
-    updateKeyBadge();
-    showToast('Gemini API key saved in browser storage!', 'success');
-    closeApiKeyModal();
-  }
-
-  function removeGeminiKey() {
-    localStorage.removeItem('gemini_api_key');
-    const input = document.getElementById('input-gemini-key');
-    if (input) input.value = '';
-    updateKeyBadge();
-    showToast('Gemini API key removed from browser storage.', 'info');
-    closeApiKeyModal();
-  }
-
-  function toggleKeyVisibility() {
-    const input = document.getElementById('input-gemini-key');
-    if (input) {
-      input.type = input.type === 'password' ? 'text' : 'password';
-    }
-  }
 
   // ── Toast ─────────────────────────────────────────────────────────────────
   function showToast(msg, type = 'info', duration = 4000) {
@@ -1975,12 +1845,6 @@
       showToast('Please select an active user first.', 'error');
       return;
     }
-    const geminiKey = getStoredGeminiKey();
-    if (!geminiKey) {
-      openApiKeyModal();
-      showToast('Please provide your Gemini API Key first to generate emails.', 'error', 5000);
-      return;
-    }
     const btn = document.getElementById('btn-generate');
     btn.disabled = true;
     document.getElementById('gen-icon').innerHTML = '<span class="spinner"></span>';
@@ -1995,7 +1859,6 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-gemini-key': geminiKey,
           },
           body: JSON.stringify({ imageData: selectedImageData, mimeType: selectedMimeType }),
         });
@@ -2025,7 +1888,6 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-gemini-key': geminiKey,
         },
         body: JSON.stringify({ jobPost, userId: activeUserId }),
       });
@@ -2107,16 +1969,10 @@
 
   // ── Follow-up ─────────────────────────────────────────────────────────────
   async function initiateFollowup(id, to) {
-    const geminiKey = getStoredGeminiKey();
-    if (!geminiKey) {
-      openApiKeyModal();
-      showToast('Please provide your Gemini API Key first to generate follow-ups.', 'error', 5000);
-      return;
-    }
     pendingFollowupId = id;
     pendingFollowupBody = null;
     document.getElementById('modal-to-label').textContent = `To: ${to}`;
-    document.getElementById('modal-body-preview').textContent = '⏳ Generating follow-up with Gemini...';
+    document.getElementById('modal-body-preview').textContent = '⏳ Generating follow-up with AI...';
     document.getElementById('modal-send-btn').disabled = true;
     document.getElementById('followup-modal').classList.add('open');
 
@@ -2125,7 +1981,6 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-gemini-key': geminiKey,
         },
         body: JSON.stringify({ id }),
       });
@@ -2281,7 +2136,6 @@
   }
 
   updateInputState();
-  updateKeyBadge();
   loadUsers();
   loadLog();
 </script>

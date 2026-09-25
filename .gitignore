@@ -23,3 +23,7 @@ public/cvs/*.pdf
 # OS files
 .DS_Store
 Thumbs.db
+
+
+server.backup.js
+ARCHITECTURE_CHANGE_LOG.md
